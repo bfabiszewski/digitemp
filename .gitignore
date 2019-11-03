@@ -1,1 +1,6 @@
+.*
+xcshareddata/
+xcuserdata/
+project.xcworkspace/
 *.o
+digitemp_*

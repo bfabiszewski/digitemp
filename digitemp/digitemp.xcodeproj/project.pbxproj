@@ -1,0 +1,644 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 50;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		15496566236EC12700E24C5B /* digitemp.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2AC22236E0B2F0059BF2C /* digitemp.c */; };
+		15496567236EC12700E24C5B /* device_name.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2AC23236E0B2F0059BF2C /* device_name.c */; };
+		15496568236EC12700E24C5B /* ds2438.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2AC20236E0B2F0059BF2C /* ds2438.c */; };
+		15496569236EC12700E24C5B /* crcutil.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2AC85236E14530059BF2C /* crcutil.c */; };
+		1549656A236EC12700E24C5B /* ioutil.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2ACA2236E14530059BF2C /* ioutil.c */; };
+		1549656B236EC12700E24C5B /* swt1f.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2AC96236E14530059BF2C /* swt1f.c */; };
+		1549656C236EC12700E24C5B /* owerr.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2ACA1236E14530059BF2C /* owerr.c */; };
+		1549656D236EC12700E24C5B /* cnt1d.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2ACA0236E14530059BF2C /* cnt1d.c */; };
+		1549656E236EC12700E24C5B /* ad26.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2AC8D236E14530059BF2C /* ad26.c */; };
+		1549657A236EC15500E24C5B /* linuxlnk.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2AC98236E14530059BF2C /* linuxlnk.c */; };
+		1549657B236EC15800E24C5B /* owsesu.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2AC9A236E14530059BF2C /* owsesu.c */; };
+		1549657C236EC15B00E24C5B /* owllu.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2AC9B236E14530059BF2C /* owllu.c */; };
+		1549657D236EC16000E24C5B /* owtrnu.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2AC9C236E14530059BF2C /* owtrnu.c */; };
+		1549657E236EC16200E24C5B /* ds2480ut.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2AC9D236E14530059BF2C /* ds2480ut.c */; };
+		1549657F236EC16500E24C5B /* ownetu.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2AC9E236E14530059BF2C /* ownetu.c */; };
+		15496580236EC18200E24C5B /* ds9097u.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2AC25236E0B2F0059BF2C /* ds9097u.c */; };
+		15496583236EC19500E24C5B /* digitemp.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2AC22236E0B2F0059BF2C /* digitemp.c */; };
+		15496584236EC19500E24C5B /* device_name.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2AC23236E0B2F0059BF2C /* device_name.c */; };
+		15496585236EC19500E24C5B /* ds2438.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2AC20236E0B2F0059BF2C /* ds2438.c */; };
+		15496586236EC19500E24C5B /* crcutil.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2AC85236E14530059BF2C /* crcutil.c */; };
+		15496587236EC19500E24C5B /* ioutil.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2ACA2236E14530059BF2C /* ioutil.c */; };
+		15496588236EC19500E24C5B /* swt1f.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2AC96236E14530059BF2C /* swt1f.c */; };
+		15496589236EC19500E24C5B /* owerr.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2ACA1236E14530059BF2C /* owerr.c */; };
+		1549658A236EC19500E24C5B /* cnt1d.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2ACA0236E14530059BF2C /* cnt1d.c */; };
+		1549658B236EC19500E24C5B /* ad26.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2AC8D236E14530059BF2C /* ad26.c */; };
+		15496597236EC1BD00E24C5B /* usblnk.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2AC90236E14530059BF2C /* usblnk.c */; };
+		15496598236EC1C000E24C5B /* owtran.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2AC91236E14530059BF2C /* owtran.c */; };
+		15496599236EC1C300E24C5B /* usbses.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2AC92236E14530059BF2C /* usbses.c */; };
+		1549659A236EC1C700E24C5B /* ownet.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2AC94236E14530059BF2C /* ownet.c */; };
+		1549659B236EC1CF00E24C5B /* ds2490.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2AC27236E0B2F0059BF2C /* ds2490.c */; };
+		15E2AC2D236E0B2F0059BF2C /* digitemp.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2AC22236E0B2F0059BF2C /* digitemp.c */; };
+		15E2AC2E236E0B2F0059BF2C /* device_name.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2AC23236E0B2F0059BF2C /* device_name.c */; };
+		15E2AC31236E0B2F0059BF2C /* ds9097.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2AC26236E0B2F0059BF2C /* ds9097.c */; };
+		15E2AC82236E12BB0059BF2C /* ds2438.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2AC20236E0B2F0059BF2C /* ds2438.c */; };
+		15E2ACAF236E14530059BF2C /* crcutil.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2AC85236E14530059BF2C /* crcutil.c */; };
+		15E2ACB5236E14530059BF2C /* ad26.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2AC8D236E14530059BF2C /* ad26.c */; };
+		15E2ACBC236E14530059BF2C /* swt1f.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2AC96236E14530059BF2C /* swt1f.c */; };
+		15E2ACC3236E14530059BF2C /* cnt1d.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2ACA0236E14530059BF2C /* cnt1d.c */; };
+		15E2ACC4236E14530059BF2C /* owerr.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2ACA1236E14530059BF2C /* owerr.c */; };
+		15E2ACC5236E14530059BF2C /* ioutil.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2ACA2236E14530059BF2C /* ioutil.c */; };
+		15E2ACC7236E14530059BF2C /* linuxlnk.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2ACA6236E14530059BF2C /* linuxlnk.c */; };
+		15E2ACCB236E14530059BF2C /* linuxses.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2ACAA236E14530059BF2C /* linuxses.c */; };
+		15E2ACCD236E14530059BF2C /* owtran.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2ACAC236E14530059BF2C /* owtran.c */; };
+		15E2ACCF236E14530059BF2C /* ownet.c in Sources */ = {isa = PBXBuildFile; fileRef = 15E2ACAE236E14530059BF2C /* ownet.c */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		15496575236EC12700E24C5B /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		15496592236EC19500E24C5B /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		15E2ABAF236D8BC10059BF2C /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		15496579236EC12700E24C5B /* ds9097u */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ds9097u; sourceTree = BUILT_PRODUCTS_DIR; };
+		15496596236EC19500E24C5B /* ds2490 */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ds2490; sourceTree = BUILT_PRODUCTS_DIR; };
+		15E2ABB1236D8BC10059BF2C /* ds9097 */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ds9097; sourceTree = BUILT_PRODUCTS_DIR; };
+		15E2AC1E236E0B2F0059BF2C /* device_name.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = device_name.h; sourceTree = "<group>"; };
+		15E2AC20236E0B2F0059BF2C /* ds2438.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ds2438.c; sourceTree = "<group>"; };
+		15E2AC22236E0B2F0059BF2C /* digitemp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = digitemp.c; sourceTree = "<group>"; };
+		15E2AC23236E0B2F0059BF2C /* device_name.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = device_name.c; sourceTree = "<group>"; };
+		15E2AC25236E0B2F0059BF2C /* ds9097u.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ds9097u.c; sourceTree = "<group>"; };
+		15E2AC26236E0B2F0059BF2C /* ds9097.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ds9097.c; sourceTree = "<group>"; };
+		15E2AC27236E0B2F0059BF2C /* ds2490.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ds2490.c; sourceTree = "<group>"; };
+		15E2AC29236E0B2F0059BF2C /* digitemp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = digitemp.h; sourceTree = "<group>"; };
+		15E2AC81236E0B5E0059BF2C /* Makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; name = Makefile; path = ../Makefile; sourceTree = "<group>"; };
+		15E2AC84236E14530059BF2C /* thermo21.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = thermo21.h; sourceTree = "<group>"; };
+		15E2AC85236E14530059BF2C /* crcutil.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = crcutil.c; sourceTree = "<group>"; };
+		15E2AC86236E14530059BF2C /* ad26.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ad26.h; sourceTree = "<group>"; };
+		15E2AC8C236E14530059BF2C /* ownet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ownet.h; sourceTree = "<group>"; };
+		15E2AC8D236E14530059BF2C /* ad26.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ad26.c; sourceTree = "<group>"; };
+		15E2AC8E236E14530059BF2C /* thermo21.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = thermo21.c; sourceTree = "<group>"; };
+		15E2AC90236E14530059BF2C /* usblnk.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = usblnk.c; sourceTree = "<group>"; };
+		15E2AC91236E14530059BF2C /* owtran.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = owtran.c; sourceTree = "<group>"; };
+		15E2AC92236E14530059BF2C /* usbses.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = usbses.c; sourceTree = "<group>"; };
+		15E2AC93236E14530059BF2C /* usblnk.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = usblnk.h; sourceTree = "<group>"; };
+		15E2AC94236E14530059BF2C /* ownet.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ownet.c; sourceTree = "<group>"; };
+		15E2AC96236E14530059BF2C /* swt1f.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = swt1f.c; sourceTree = "<group>"; };
+		15E2AC98236E14530059BF2C /* linuxlnk.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = linuxlnk.c; sourceTree = "<group>"; };
+		15E2AC99236E14530059BF2C /* ds2480.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ds2480.h; sourceTree = "<group>"; };
+		15E2AC9A236E14530059BF2C /* owsesu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = owsesu.c; sourceTree = "<group>"; };
+		15E2AC9B236E14530059BF2C /* owllu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = owllu.c; sourceTree = "<group>"; };
+		15E2AC9C236E14530059BF2C /* owtrnu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = owtrnu.c; sourceTree = "<group>"; };
+		15E2AC9D236E14530059BF2C /* ds2480ut.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ds2480ut.c; sourceTree = "<group>"; };
+		15E2AC9E236E14530059BF2C /* ownetu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ownetu.c; sourceTree = "<group>"; };
+		15E2AC9F236E14530059BF2C /* owproto.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = owproto.h; sourceTree = "<group>"; };
+		15E2ACA0236E14530059BF2C /* cnt1d.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cnt1d.c; sourceTree = "<group>"; };
+		15E2ACA1236E14530059BF2C /* owerr.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = owerr.c; sourceTree = "<group>"; };
+		15E2ACA2236E14530059BF2C /* ioutil.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ioutil.c; sourceTree = "<group>"; };
+		15E2ACA4236E14530059BF2C /* win32lnk.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = win32lnk.c; sourceTree = "<group>"; };
+		15E2ACA6236E14530059BF2C /* linuxlnk.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = linuxlnk.c; sourceTree = "<group>"; };
+		15E2ACAA236E14530059BF2C /* linuxses.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = linuxses.c; sourceTree = "<group>"; };
+		15E2ACAC236E14530059BF2C /* owtran.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = owtran.c; sourceTree = "<group>"; };
+		15E2ACAD236E14530059BF2C /* owerr.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = owerr.c; sourceTree = "<group>"; };
+		15E2ACAE236E14530059BF2C /* ownet.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ownet.c; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		15496574236EC12700E24C5B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		15496591236EC19500E24C5B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		15E2ABAE236D8BC10059BF2C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		15E2ABA8236D8BC10059BF2C = {
+			isa = PBXGroup;
+			children = (
+				15E2AC83236E14530059BF2C /* userial */,
+				15E2AC81236E0B5E0059BF2C /* Makefile */,
+				15E2AC1D236E0B2F0059BF2C /* src */,
+				15E2ABB2236D8BC10059BF2C /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		15E2ABB2236D8BC10059BF2C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				15E2ABB1236D8BC10059BF2C /* ds9097 */,
+				15496579236EC12700E24C5B /* ds9097u */,
+				15496596236EC19500E24C5B /* ds2490 */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		15E2AC1D236E0B2F0059BF2C /* src */ = {
+			isa = PBXGroup;
+			children = (
+				15E2AC1E236E0B2F0059BF2C /* device_name.h */,
+				15E2AC20236E0B2F0059BF2C /* ds2438.c */,
+				15E2AC22236E0B2F0059BF2C /* digitemp.c */,
+				15E2AC23236E0B2F0059BF2C /* device_name.c */,
+				15E2AC25236E0B2F0059BF2C /* ds9097u.c */,
+				15E2AC26236E0B2F0059BF2C /* ds9097.c */,
+				15E2AC27236E0B2F0059BF2C /* ds2490.c */,
+				15E2AC29236E0B2F0059BF2C /* digitemp.h */,
+			);
+			name = src;
+			path = ../src;
+			sourceTree = "<group>";
+		};
+		15E2AC83236E14530059BF2C /* userial */ = {
+			isa = PBXGroup;
+			children = (
+				15E2AC84236E14530059BF2C /* thermo21.h */,
+				15E2AC85236E14530059BF2C /* crcutil.c */,
+				15E2AC86236E14530059BF2C /* ad26.h */,
+				15E2AC8C236E14530059BF2C /* ownet.h */,
+				15E2AC8D236E14530059BF2C /* ad26.c */,
+				15E2AC8E236E14530059BF2C /* thermo21.c */,
+				15E2AC8F236E14530059BF2C /* ds2490 */,
+				15E2AC96236E14530059BF2C /* swt1f.c */,
+				15E2AC97236E14530059BF2C /* ds9097u */,
+				15E2AC9F236E14530059BF2C /* owproto.h */,
+				15E2ACA0236E14530059BF2C /* cnt1d.c */,
+				15E2ACA1236E14530059BF2C /* owerr.c */,
+				15E2ACA2236E14530059BF2C /* ioutil.c */,
+				15E2ACA3236E14530059BF2C /* win32 */,
+				15E2ACA5236E14530059BF2C /* ds9097 */,
+			);
+			name = userial;
+			path = ../userial;
+			sourceTree = "<group>";
+		};
+		15E2AC8F236E14530059BF2C /* ds2490 */ = {
+			isa = PBXGroup;
+			children = (
+				15E2AC90236E14530059BF2C /* usblnk.c */,
+				15E2AC91236E14530059BF2C /* owtran.c */,
+				15E2AC92236E14530059BF2C /* usbses.c */,
+				15E2AC93236E14530059BF2C /* usblnk.h */,
+				15E2AC94236E14530059BF2C /* ownet.c */,
+			);
+			path = ds2490;
+			sourceTree = "<group>";
+		};
+		15E2AC97236E14530059BF2C /* ds9097u */ = {
+			isa = PBXGroup;
+			children = (
+				15E2AC98236E14530059BF2C /* linuxlnk.c */,
+				15E2AC99236E14530059BF2C /* ds2480.h */,
+				15E2AC9A236E14530059BF2C /* owsesu.c */,
+				15E2AC9B236E14530059BF2C /* owllu.c */,
+				15E2AC9C236E14530059BF2C /* owtrnu.c */,
+				15E2AC9D236E14530059BF2C /* ds2480ut.c */,
+				15E2AC9E236E14530059BF2C /* ownetu.c */,
+			);
+			path = ds9097u;
+			sourceTree = "<group>";
+		};
+		15E2ACA3236E14530059BF2C /* win32 */ = {
+			isa = PBXGroup;
+			children = (
+				15E2ACA4236E14530059BF2C /* win32lnk.c */,
+			);
+			path = win32;
+			sourceTree = "<group>";
+		};
+		15E2ACA5236E14530059BF2C /* ds9097 */ = {
+			isa = PBXGroup;
+			children = (
+				15E2ACA6236E14530059BF2C /* linuxlnk.c */,
+				15E2ACAA236E14530059BF2C /* linuxses.c */,
+				15E2ACAC236E14530059BF2C /* owtran.c */,
+				15E2ACAD236E14530059BF2C /* owerr.c */,
+				15E2ACAE236E14530059BF2C /* ownet.c */,
+			);
+			path = ds9097;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		15496564236EC12700E24C5B /* ds9097u */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 15496576236EC12700E24C5B /* Build configuration list for PBXNativeTarget "ds9097u" */;
+			buildPhases = (
+				15496565236EC12700E24C5B /* Sources */,
+				15496574236EC12700E24C5B /* Frameworks */,
+				15496575236EC12700E24C5B /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ds9097u;
+			productName = digitemp;
+			productReference = 15496579236EC12700E24C5B /* ds9097u */;
+			productType = "com.apple.product-type.tool";
+		};
+		15496581236EC19500E24C5B /* ds2490 */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 15496593236EC19500E24C5B /* Build configuration list for PBXNativeTarget "ds2490" */;
+			buildPhases = (
+				15496582236EC19500E24C5B /* Sources */,
+				15496591236EC19500E24C5B /* Frameworks */,
+				15496592236EC19500E24C5B /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ds2490;
+			productName = digitemp;
+			productReference = 15496596236EC19500E24C5B /* ds2490 */;
+			productType = "com.apple.product-type.tool";
+		};
+		15E2ABB0236D8BC10059BF2C /* ds9097 */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 15E2ABB8236D8BC10059BF2C /* Build configuration list for PBXNativeTarget "ds9097" */;
+			buildPhases = (
+				15E2ABAD236D8BC10059BF2C /* Sources */,
+				15E2ABAE236D8BC10059BF2C /* Frameworks */,
+				15E2ABAF236D8BC10059BF2C /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ds9097;
+			productName = digitemp;
+			productReference = 15E2ABB1236D8BC10059BF2C /* ds9097 */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		15E2ABA9236D8BC10059BF2C /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 1010;
+				ORGANIZATIONNAME = "Bartek Fabiszewski";
+				TargetAttributes = {
+					15E2ABB0236D8BC10059BF2C = {
+						CreatedOnToolsVersion = 10.1;
+					};
+				};
+			};
+			buildConfigurationList = 15E2ABAC236D8BC10059BF2C /* Build configuration list for PBXProject "digitemp" */;
+			compatibilityVersion = "Xcode 9.3";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 15E2ABA8236D8BC10059BF2C;
+			productRefGroup = 15E2ABB2236D8BC10059BF2C /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				15E2ABB0236D8BC10059BF2C /* ds9097 */,
+				15496564236EC12700E24C5B /* ds9097u */,
+				15496581236EC19500E24C5B /* ds2490 */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		15496565236EC12700E24C5B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				15496566236EC12700E24C5B /* digitemp.c in Sources */,
+				15496567236EC12700E24C5B /* device_name.c in Sources */,
+				15496568236EC12700E24C5B /* ds2438.c in Sources */,
+				15496569236EC12700E24C5B /* crcutil.c in Sources */,
+				1549656A236EC12700E24C5B /* ioutil.c in Sources */,
+				1549656B236EC12700E24C5B /* swt1f.c in Sources */,
+				1549656C236EC12700E24C5B /* owerr.c in Sources */,
+				1549656D236EC12700E24C5B /* cnt1d.c in Sources */,
+				1549656E236EC12700E24C5B /* ad26.c in Sources */,
+				1549657A236EC15500E24C5B /* linuxlnk.c in Sources */,
+				1549657B236EC15800E24C5B /* owsesu.c in Sources */,
+				1549657C236EC15B00E24C5B /* owllu.c in Sources */,
+				1549657D236EC16000E24C5B /* owtrnu.c in Sources */,
+				1549657E236EC16200E24C5B /* ds2480ut.c in Sources */,
+				1549657F236EC16500E24C5B /* ownetu.c in Sources */,
+				15496580236EC18200E24C5B /* ds9097u.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		15496582236EC19500E24C5B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				15496583236EC19500E24C5B /* digitemp.c in Sources */,
+				15496584236EC19500E24C5B /* device_name.c in Sources */,
+				15496585236EC19500E24C5B /* ds2438.c in Sources */,
+				15496586236EC19500E24C5B /* crcutil.c in Sources */,
+				15496587236EC19500E24C5B /* ioutil.c in Sources */,
+				15496588236EC19500E24C5B /* swt1f.c in Sources */,
+				15496589236EC19500E24C5B /* owerr.c in Sources */,
+				1549658A236EC19500E24C5B /* cnt1d.c in Sources */,
+				1549658B236EC19500E24C5B /* ad26.c in Sources */,
+				15496597236EC1BD00E24C5B /* usblnk.c in Sources */,
+				15496598236EC1C000E24C5B /* owtran.c in Sources */,
+				15496599236EC1C300E24C5B /* usbses.c in Sources */,
+				1549659A236EC1C700E24C5B /* ownet.c in Sources */,
+				1549659B236EC1CF00E24C5B /* ds2490.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		15E2ABAD236D8BC10059BF2C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				15E2AC2D236E0B2F0059BF2C /* digitemp.c in Sources */,
+				15E2AC2E236E0B2F0059BF2C /* device_name.c in Sources */,
+				15E2AC82236E12BB0059BF2C /* ds2438.c in Sources */,
+				15E2ACAF236E14530059BF2C /* crcutil.c in Sources */,
+				15E2ACC5236E14530059BF2C /* ioutil.c in Sources */,
+				15E2ACBC236E14530059BF2C /* swt1f.c in Sources */,
+				15E2ACC4236E14530059BF2C /* owerr.c in Sources */,
+				15E2ACC3236E14530059BF2C /* cnt1d.c in Sources */,
+				15E2ACB5236E14530059BF2C /* ad26.c in Sources */,
+				15E2ACCF236E14530059BF2C /* ownet.c in Sources */,
+				15E2ACC7236E14530059BF2C /* linuxlnk.c in Sources */,
+				15E2ACCB236E14530059BF2C /* linuxses.c in Sources */,
+				15E2ACCD236E14530059BF2C /* owtran.c in Sources */,
+				15E2AC31236E0B2F0059BF2C /* ds9097.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		15496577236EC12700E24C5B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		15496578236EC12700E24C5B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		15496594236EC19500E24C5B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		15496595236EC19500E24C5B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		15E2ABB6236D8BC10059BF2C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					DEBUG,
+					"DARWIN=1",
+					"OWUSB=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"./**",
+					"../**",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "-I/usr/local/mysql/include/mysql";
+				OTHER_LDFLAGS = (
+					"-L/usr/local/mysql/lib",
+					"-lmysqlclient",
+					"-lm",
+					"-lz",
+				);
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		15E2ABB7236D8BC10059BF2C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DARWIN=1",
+					"OWUSB=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"./**",
+					"../**",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				OTHER_CFLAGS = "-I/usr/local/mysql/include/mysql";
+				OTHER_LDFLAGS = (
+					"-L/usr/local/mysql/lib",
+					"-lmysqlclient",
+					"-lm",
+					"-lz",
+				);
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		15E2ABB9236D8BC10059BF2C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		15E2ABBA236D8BC10059BF2C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		15496576236EC12700E24C5B /* Build configuration list for PBXNativeTarget "ds9097u" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				15496577236EC12700E24C5B /* Debug */,
+				15496578236EC12700E24C5B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		15496593236EC19500E24C5B /* Build configuration list for PBXNativeTarget "ds2490" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				15496594236EC19500E24C5B /* Debug */,
+				15496595236EC19500E24C5B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		15E2ABAC236D8BC10059BF2C /* Build configuration list for PBXProject "digitemp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				15E2ABB6236D8BC10059BF2C /* Debug */,
+				15E2ABB7236D8BC10059BF2C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		15E2ABB8236D8BC10059BF2C /* Build configuration list for PBXNativeTarget "ds9097" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				15E2ABB9236D8BC10059BF2C /* Debug */,
+				15E2ABBA236D8BC10059BF2C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 15E2ABA9236D8BC10059BF2C /* Project object */;
+}
