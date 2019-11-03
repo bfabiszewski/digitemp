@@ -172,7 +172,6 @@ SMALLINT owTouchReset(int portnum)
 	       } else {
 		  /* No device responding */
 		  OWERROR(OWERROR_NO_DEVICES_ON_NET);
-		  stat = FALSE;
 	       }
 	  }
      } else {

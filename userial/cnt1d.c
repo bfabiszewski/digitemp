@@ -66,7 +66,7 @@ SMALLINT ReadCounter(int portnum, int CounterPage,  unsigned long *Count)
    uchar send_block[30];
    uchar send_cnt=0, i;
    int address;
-   ushort lastcrc16;
+   ushort lastcrc16=0;
 
    setcrc16(portnum,0);
 

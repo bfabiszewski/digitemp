@@ -145,7 +145,7 @@ SMALLINT owNext(int portnum, SMALLINT do_reset, SMALLINT alarm_only)
    uchar tmp_serial_num[8];
    uchar readbuffer[20],sendpacket[40];
    uchar i,sendlen=0;
-   uchar lastcrc8;
+   uchar lastcrc8=0;
 
    // if the last call was the last one
    if (LastDevice[portnum])
