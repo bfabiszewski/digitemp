@@ -12,7 +12,8 @@
 VERSION = 3.6.0
 
 CC	= gcc
-CFLAGS	= -I./src -I./userial -O2 -Wall # -g
+CFLAGS = -I./src -I./userial -I/usr/include/mysql -O2 # -g -Wall
+LIBS   = -L/usr/lib/mysql -lmysqlclient -lm -lz
 
 OBJS		=	src/digitemp.o src/device_name.o src/ds2438.o
 HDRS		= 	src/digitemp.h src/device_name.h
@@ -130,7 +131,7 @@ clean:
 		rm -f *~ src/*~ userial/*~ userial/ds9097/*~ userial/ds9097u/*~ userial/ds2490/*~
 		rm -f $(OBJS) $(ONEWIREOBJS) $(DS9097OBJS) $(DS9097UOBJS) $(DS2490OBJS)
 		rm -f core *.asc 
-		rm -f perl/*~ rrdb/*~ .digitemprc digitemp-$(VERSION)-1.spec
+		rm -f perl/*~ rrdb/*~ .digitemprc .digitemprc_mysql digitemp-$(VERSION)-1.spec
 		rm -rf digitemp-$(VERSION)
 
 # Sign the binaries using gpg (www.gnupg.org)
@@ -139,9 +140,9 @@ sign:
 		gpg -ba digitemp_DS*
 		echo
 
-# Install digitemp into /usr/local/bin
+# Install digitemp into /usr/bin
 install:	digitemp
-		install -b -o root -g bin digitemp /usr/local/bin
+		install -b -o root -g bin digitemp /usr/bin
 
 # Build the archive of everything
 archive:	clean

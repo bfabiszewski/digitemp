@@ -30,6 +30,7 @@
 #define OPT_WALK     0x0020
 #define OPT_DS2438   0x0040
 #define OPT_SORT     0x0080
+#define OPT_DBLOG    0x0040
 #define OPT_TEST     0x0100
 
 
@@ -94,16 +95,16 @@ int build_tf( char *time_format, char *format, int sensor,
 int build_cf( char *time_format, char *format, int sensor, int page,
               unsigned long count, unsigned char *sn );
 int log_string( char *line );
-int log_temp( int sensor, float temp_c, unsigned char *sn );
+int log_temp( int sensor, float temp_c, unsigned char *sn, MYSQL *conn );
 int log_counter( int sensor, int page, unsigned long counter, unsigned char *sn );
 int log_humidity( int sensor, double temp_c, int humidity, unsigned char *sn );
 int cmpSN( unsigned char *sn1, unsigned char *sn2, int branch );
 void show_scratchpad( unsigned char *scratchpad, int sensor_family );
-int read_temperature( int sensor_family, int sensor );
+int read_temperature( int sensor_family, int sensor, MYSQL *conn );
 int read_counter( int sensor_family, int sensor );
 int read_ds2438( int sensor_family, int sensor );
 int read_humidity( int sensor_family, int sensor );
-int read_device( struct _roms *sensor_list, int sensor );
+int read_device( struct _roms *sensor_list, int sensor, MYSQL *conn );
 int read_all( struct _roms *sensor_list );
 int read_rcfile( char *fname, struct _roms *sensor_list );
 int write_rcfile( char *fname, struct _roms *sensor_list );

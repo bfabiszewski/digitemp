@@ -29,6 +29,7 @@
      digitemp -t0			Read Temperature
      digitemp -q                        Quiet, no copyright banner
      digitemp -a			Read all Temperatures
+     digitemp -e                        Log all sensors to MySQL table
      digitemp -d5                       Delay between samples (in sec.)
      digitemp -n50                      Number of times to repeat. 0=forever
      digitemp -A                        Treat DS2438 as A/D converter
@@ -73,6 +74,7 @@
 #include <fcntl.h>
 #include <strings.h>
 #include <stdint.h>
+#include <mysql.h>
 #include "ad26.h"
 
 // Include endian.h
@@ -171,13 +173,25 @@ char serial_port[40],                        /* Path to the serial port */
      humidity_format[80],			/* Format for Humidity readings		*/
      tmp_humidity_format[80],
      conf_file[1024],			/* Configuration File      */
-     option_list[40];
+     option_list[40],
+     db_conf_file[1024],                     /* MySQL Configuration File*/
+     dbuser[16],                             /* MySQL user name         */
+     dbhost[16],                             /* MySQL hostname          */
+     dbpass[16],                             /* MySQL password          */
+     dbname[32],                             /* MySQL database name     */
+     dbtable[32],                            /* MySQL database table    */
+     dbcolumns[1024];                        /* MySQL database columns  */
 int	read_time,				/* Pause during read	   */
 	tmp_read_time,
 	log_type,				/* output format type	   */
 	tmp_log_type,
     num_cs = 0,                             /* Number of sensors on cplr */
 	opts = 0;				/* Bitmask of flags	        */
+
+//MySQL DBCOLUMN config file delimeter
+char ckdelim[] = ",";
+//For column keywords from MySQL config file
+char *columnKeywords[6];
 
 struct _coupler *coupler_top = NULL;		/* Linked list of couplers */
 
@@ -195,7 +209,7 @@ void usage()
   printf(BANNER_1);
   printf(BANNER_2);
   printf(BANNER_3, dtlib );		         /* Report Library version */
-  printf("\nUsage: digitemp [-s -i -I -U -l -r -v -t -a -d -n -o -c]\n");
+  printf("\nUsage: digitemp [-s -i -I -U -l -r -v -t -a -d -n -o -c -e]\n");
   printf("                -i                            Initalize .digitemprc file\n");
   printf("                -I                            Initalize .digitemprc file w/sorted serial #s\n");
   printf("                -w                            Walk the full device tree\n");
@@ -207,6 +221,7 @@ void usage()
   printf("                -t 0                          Read Sensor #\n");
   printf("                -q                            No Copyright notice\n");
   printf("                -a                            Read all Sensors\n");
+  printf("                -e                            Log all sensors to MySQL table\n");
   printf("                -d 5                          Delay between samples (in sec.)\n");
   printf("                -n 50                         Number of times to repeat\n");
   printf("                                              0=loop forever\n");
@@ -597,23 +612,90 @@ int log_string( char *line )
 
    Used with temperatures
    ----------------------------------------------------------------------- */
-int log_temp( int sensor, float temp_c, unsigned char *sn )
+int log_temp( int sensor, float temp_c, unsigned char *sn, MYSQL *conn )
 {
   char	temp[1024],
-  	time_format[160];
+  	time_format[160],
+	dtf[160],
+	tempd[1024];
   time_t	mytime;
-
 
   mytime = time(NULL);
   if( mytime )
   {
-    /* Build the time format string from log_format */
-    build_tf( time_format, temp_format, sensor, temp_c, -1, sn );
+    /* MySQL mods by Nick, more info at http://illx.org/digitemp */
+    /* MySQL code has now been implemented on digitemp 3.5       */
+    /* MySQL code can now handle custom table format             */
+    if(log_type == 4) {
+       char query[2048], snt[1024];
+ 
+       sprintf(snt, "%02X%02X%02X%02X%02X%02X%02X%02X",
+               sn[0],sn[1],sn[2],sn[3],sn[4],sn[5],sn[6],sn[7]);
+       strcpy(dtf, "%Y-%m-%d %H:%M:%S");
+       strftime( tempd, 1024, dtf, localtime( &mytime ) );
 
-    /* Handle the time format tokens */
-    strftime( temp, 1024, time_format, localtime( &mytime ) );
+       /* build the mysql SQL query */
+       if(strlen(dbcolumns) == 0) {
+	 if(strlen(dbtable) == 0)
+	   sprintf(query, "INSERT INTO temps VALUES('%d','%f','%f','%s','%s')",
+		 sensor, temp_c, c2f(temp_c), snt, tempd);
+	 else 
+	   sprintf(query, "INSERT INTO %s VALUES('%d','%f','%f','%s','%s')",
+		 dbtable, sensor, temp_c, c2f(temp_c), snt, tempd);
+       }
+       else {
+	 char *token, *cp;
+	 char tstr[1024];
 
-    strcat( temp, "\n" );
+	 cp = strdup(dbcolumns);
+	 token = strtok(cp, ckdelim);
+	 sprintf(query, "INSERT INTO %s VALUES(", dbtable);
+	 int wc = 0;
+	 while(token != NULL) {
+	   if(wc > 0)
+	     strcat(query, ",");
+
+	   if(!strcmp(token,"BLANK"))
+	     sprintf(tstr, "''");
+	   else if(!strcmp(token,"TEMPC"))
+	     sprintf(tstr, "'%f'", temp_c);
+	   else if(!strcmp(token,"TEMPF"))
+	     sprintf(tstr, "'%f'", c2f(temp_c));
+	   else if(!strcmp(token,"SERIAL"))
+	     sprintf(tstr, "'%s'", snt);
+	   else if(!strcmp(token,"TIMESTAMP"))
+	     sprintf(tstr, "'%s'", tempd);
+	   else if(!strcmp(token,"SENSOR"))
+	     sprintf(tstr, "'%d'", sensor);
+	   else 
+	     sprintf(tstr, "'BAD TOKEN'");
+
+	     strcat(query, tstr);
+	   token = strtok(NULL, ckdelim);
+	   wc++;
+	 }
+	 strcat(query, ")");
+       }
+
+       //printf("query string: '%s'\n", query);
+
+       /* execute it */
+       if(mysql_query (conn, query) != 0) {
+         printf("Error!! MySQL INSERT failed!\n");
+       }
+       else {
+         return 0;
+       }
+    }
+    else {
+       /* Build the time format string from log_format */
+       build_tf( time_format, temp_format, sensor, temp_c, -1, sn );
+
+       /* Handle the time format tokens */
+       strftime( temp, 1024, time_format, localtime( &mytime ) );
+
+       strcat( temp, "\n" );
+    }
   } else {
     sprintf( temp, "Time Error\n" );
   }
@@ -829,7 +911,7 @@ void show_scratchpad( unsigned char *scratchpad, int sensor_family )
    If Sign is not 0x00 then it is a negative (Centigrade) number, and
    the temperature must be subtracted from 0x100 and multiplied by -1
    ----------------------------------------------------------------------- */
-int read_temperature( int sensor_family, int sensor )
+int read_temperature( int sensor_family, int sensor, MYSQL *conn )
 {
   char    temp[1024];              /* For output string                    */
   unsigned char lastcrc8,
@@ -957,9 +1039,13 @@ int read_temperature( int sensor_family, int sensor )
               case 3:     sprintf( temp, "\t%3.2f", c2f(temp_c) );
                           log_string( temp );
                           break;
+	      /* MySQL log_type */
+	      case 4:    owSerialNum( 0, &TempSN[0], TRUE );
+		log_temp( sensor, temp_c, TempSN, conn );
+		break;
 
               default:    owSerialNum( 0, &TempSN[0], TRUE );
-                          log_temp( sensor, temp_c, TempSN );
+                          log_temp( sensor, temp_c, TempSN, 0 );
                           break;
             } /* switch( log_type ) */
 
@@ -1390,7 +1476,7 @@ int read_temperature_DS1923( int sensor_family, int sensor )
 /* -----------------------------------------------------------------------
    Select the indicated device, turning on any required couplers
    ----------------------------------------------------------------------- */
-int read_device( struct _roms *sensor_list, int sensor )
+int read_device( struct _roms *sensor_list, int sensor, MYSQL *conn )
 {
   unsigned char   TempSN[8],
                   a[3];
@@ -1485,7 +1571,7 @@ int read_device( struct _roms *sensor_list, int sensor )
     case DS1820_FAMILY:
     case DS1822_FAMILY:
     case DS18B20_FAMILY:
-      status = read_temperature( sensor_family, sensor ); // also for DS28EA00
+      status = read_temperature( sensor_family, sensor, conn ); // also for DS28EA00
       break;
 
     case DS1923_FAMILY:
@@ -1531,12 +1617,25 @@ int read_all( struct _roms *sensor_list )
   
   for( x = 0; x <  (num_cs+sensor_list->max); x++ )
   {
-    read_device( sensor_list, x );
+    read_device( sensor_list, x, 0 );
   }
   
   return 0;
 }
 
+/* This routine reads all the sensors and logs to MySQL */
+int read_all_and_dblog( struct _roms *sensor_list, MYSQL *conn  )
+{
+  int x;
+ 
+  for( x = 0; x <  (num_cs+sensor_list->max); x++ )
+    {
+      /*printf();*/
+      read_device( sensor_list, x, conn );
+    }
+  
+  return 0;
+}
 
 /* -----------------------------------------------------------------------
    Read a .digitemprc file from the current directory
@@ -1774,6 +1873,109 @@ int read_rcfile( char *fname, struct _roms *sensor_list )
   return 0;
 }
 
+/* -----------------------------------------------------------------------                                        
+   Read a .digitemprc_mysql file from the current directory
+   The rc file contains:
+ 
+   DBNAME database_name
+   DBUSER database_user_name
+   DBPASS database_password
+   DBHOST localhost (or specified host)
+   DBTABLE temps (or specified table )
+   DBCOLUMNS localhost (or default column format which is (SENSOR, TEMPC, TEMPF, SERIAL, TIMESTAMP))
+
+   DBCOLUMNS must be formatted with the following keywords in any order delimited by commas:
+   SENSOR
+   TEMPC
+   TEMPF
+   SERIAL
+   TIMESTAMP
+
+   Also, DBCOLUMNS may have an optional BLANK which would serve as a blank coulmn INSERT, an example could be:
+   SENSOR,BLANK,TEMPC,TIMESTAMP,BLANK,SERIAL
+*/
+int read_rcdbfile( char *fname )
+{
+  FILE  *fp;
+  char  temp[80];
+  char  *ptr;
+  int   sensors;
+  struct _coupler *c_ptr, *coupler_end;
+
+  sensors = 0;
+  num_cs = 0;
+  c_ptr = coupler_top;
+  coupler_end = coupler_top;
+ 
+  if( ( fp = fopen( fname, "r" ) ) == NULL ) {
+    /* No rcfile to read, could be part of an -i so don't die */
+    return 1;
+  }
+  
+  while( fgets( temp, 80, fp ) != 0 ) {
+    if( (temp[0] == '\n') || (temp[0] == '#') )
+      continue;
+    
+    ptr = strtok( temp, " \t\n" );
+    if( strncasecmp( "DBUSER", ptr, 6 ) == 0 ) {
+      ptr = strtok( NULL, " \t\n" );
+      strcpy( dbuser, ptr );
+    } 
+    else if( strncasecmp( "DBPASS", ptr, 6 ) == 0 ) {
+      ptr = strtok( NULL, " \t\n");
+      strcpy( dbpass, ptr );
+    } 
+    else if( strncasecmp( "DBHOST", ptr, 6 ) == 0 ) {
+      ptr = strtok( NULL, " \t\n");
+      strcpy( dbhost, ptr );
+    } 
+    else if( strncasecmp( "DBNAME", ptr, 6 ) == 0 ) {
+      ptr = strtok( NULL, "\"\n");
+      strcpy( dbname, ptr );
+    } 
+    else if( strncasecmp( "DBTABLE", ptr, 6 ) == 0 ) {
+      ptr = strtok( NULL, "\"\n");
+      strcpy( dbtable, ptr );
+    } 
+    else if( strncasecmp( "DBCOLUMNS", ptr, 6 ) == 0 ) {
+      ptr = strtok( NULL, "\"\n");
+      strcpy( dbcolumns, ptr );
+    } 
+    else {
+      fprintf( stderr, "Error reading %s file\n", fname );
+      printf("Error reading %s file\n", fname );
+      fclose( fp );
+      return -1;
+    }
+  }
+  fclose( fp );
+
+  //validate the columns
+  if(strlen(dbcolumns) > 0) {
+    char *token, *cp;
+
+    cp = strdup(dbcolumns);
+    token = strtok(cp, ckdelim);
+    int c=0;
+    while(token != NULL) {
+      c++;
+      //printf("dbcolumn token validation '%s'\n", token);
+      int bc = 1;
+      int i;
+      for(i=0;i<6;i++)
+	if(!strcmp(columnKeywords[i], token))
+	  bc--;
+
+      if(bc) {
+	printf("/etc/digitemprc_mysql, DBCOLUMNS: Bad column keyword '%s' found at column %i\n", token, c);
+	exit(0);
+      }
+      token = strtok(NULL, ckdelim);
+    }
+  }
+
+  return 0;
+}
 
 /* -----------------------------------------------------------------------
    Write a .digitemprc file, it contains:
@@ -2406,7 +2608,6 @@ int file_exists (char * fileName)
    return 0;
 }
 
-
 /* ----------------------------------------------------------------------- *
    DigiTemp main routine
    
@@ -2424,6 +2625,11 @@ int main( int argc, char *argv[] )
 		start_time;		/* Starting time		*/
   long int	elapsed_time;		/* Elapsed from start		*/
   struct _roms  sensor_list;            /* Attached Roms                */
+
+  /* valid MySQL column keywords */
+  char *ck1 = "SENSOR", *ck2 = "TEMPC", *ck3 = "TEMPF", *ck4 = "SERIAL", *ck5 = "TIMESTAMP", *ck6 = "BLANK";
+  columnKeywords[0] = ck1; columnKeywords[1] = ck2; columnKeywords[2] = ck3; 
+  columnKeywords[3] = ck4; columnKeywords[4] = ck5; columnKeywords[5] = ck6;
 
 
   /* Make sure the structure is erased */
@@ -2461,9 +2667,9 @@ int main( int argc, char *argv[] )
   strcpy( temp_format, "%b %d %H:%M:%S Sensor %s C: %.2C F: %.2F" );
   strcpy( counter_format, "%b %d %H:%M:%S Sensor %s #%n %C" );
   strcpy( humidity_format, "%b %d %H:%M:%S Sensor %s C: %.2C F: %.2F H: %h%%" );
-  strcpy( conf_file, ".digitemprc" );
-  strcpy( option_list, "?ThqiaAvwr:f:s:l:t:d:n:o:c:O:H:" );
-
+  strcpy( conf_file, "/etc/digitemprc" );
+  strcpy( option_list, "?hqiaAvwr:f:s:l:t:d:n:o:c:O:H:e" );
+  strcpy( db_conf_file, "/etc/digitemprc_mysql" );
 
   /* Command line options override any .digitemprc options temporarily	*/
   /* Unless the -i parameter is specified, then changes are saved to    */
@@ -2569,7 +2775,9 @@ int main( int argc, char *argv[] )
                     strncpy( tmp_humidity_format, optarg, sizeof(tmp_humidity_format)-1 );
 		}
 		break;
-		
+      case 'e': opts |= OPT_DBLOG;              /* Log to MySQL */
+	        break;     		
+
       case 'q': opts |= OPT_QUIET;
       		break;
 
@@ -2584,13 +2792,17 @@ int main( int argc, char *argv[] )
   }  /* while getopt */
 
   /* Require one 1 action command, no more, no less. */
-  if ((opts & (OPT_WALK|OPT_INIT|OPT_SINGLE|OPT_ALL)) == 0 )
+  if ((opts & (OPT_WALK|OPT_INIT|OPT_SINGLE|OPT_ALL|OPT_DBLOG)) == 0 )
   {
-    fprintf( stderr, "Error!  You need 1 of the following action commands, -w -a -i -t\n");
+    fprintf( stderr, "Error!  You need 1 of the following action commands, -w -a -i -t -e\n");
     exit(EXIT_HELP);
   }
 
   if ( read_rcfile( conf_file, &sensor_list ) < 0 ) {
+    exit(EXIT_NORC);
+  }
+
+  if ( read_rcdbfile( db_conf_file ) < 0 ) {
     exit(EXIT_NORC);
   }
 
@@ -2818,7 +3030,7 @@ int main( int argc, char *argv[] )
     /* Should we read just one sensor? */
     if( opts & OPT_SINGLE )
     {
-      read_device( &sensor_list, sensor );  
+      read_device( &sensor_list, sensor, 0 );  
     }
   
     /* Should we read all connected sensors? */
@@ -2826,7 +3038,30 @@ int main( int argc, char *argv[] )
     {
       read_all( &sensor_list );
     }
-  
+
+    /* MySQL database stuff */
+    if( opts & OPT_DBLOG ) {
+      /* open the mysql database */
+      MYSQL *conn;
+      conn = mysql_init(NULL);
+      if(conn == NULL) {
+	fprintf(stderr, "mysql_init() failed... probably out of memory\n");
+	exit(1);
+      }
+ 
+      if( mysql_real_connect (conn,dbhost,dbuser,dbpass,
+			      dbname,0,NULL,0) == NULL) {
+	fprintf(stderr, "mysql_real_connect() failed!\nError: (%u) '%s'\n",
+		mysql_errno(conn), mysql_error(conn));
+	mysql_close(conn);
+	exit(1);
+      }
+      
+      log_type = 4;
+      read_all_and_dblog( &sensor_list, conn );
+      mysql_close(conn);
+    }
+      
     switch( log_type )
     {
       /* For this type of logging we print out the elapsed time at the
