@@ -74,7 +74,6 @@
 #include <fcntl.h>
 #include <strings.h>
 #include <stdint.h>
-#include <mysql.h>
 #include "ad26.h"
 
 #include "digitemp.h"

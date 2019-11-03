@@ -71,6 +71,8 @@
 /* Number of tries to read a sensor before giving up */
 #define MAX_READ_TRIES	3
 
+#include <mysql.h>
+
 struct _roms {
         unsigned char   *roms;                  /* Array of 8 bytes     */
         int             max;                    /* Maximum number       */
