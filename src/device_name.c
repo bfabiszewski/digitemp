@@ -128,6 +128,9 @@ char *device_name( unsigned int family )
     case 0x42:
       return "DS28EA00 Temperature Sensor with Sequence Detect and PIO";
 
+    case 0x81:
+      return "DS2401 Serial Number (DS9490R/DS9490B)";
+
     case 0x82:
       return "DS1425 Multi iButton";
       
@@ -148,7 +151,13 @@ char *device_name( unsigned int family )
       
     case 0x96:
       return "DS1955/DS1957B Java Cryptographic iButton";
-  
+
+    case 0xEE:
+      return "Hobby Boards with Temperature Sensor";
+
+    case 0xEF:
+      return "Hobby Boards";
+
     default:
       return "Unknown Family Code";
   }

@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
    DigiTemp
       
-   Copyright 1996-2007 by Brian C. Lane <bcl@brianlane.com>
+   Copyright 1996-2018 by Brian C. Lane <bcl@brianlane.com>
    All Rights Reserved
 
    This program is free software; you can redistribute it and/or modify it
@@ -19,7 +19,7 @@
    59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
    
      digitemp -w                        Walk the LAN & show all
-     digitemp -i			Initalize .digitemprc file
+     digitemp -i			Initialize .digitemprc file
      digitemp -I                        Initialize .digitemprc w/sorted serial #s
      digitemp -s/dev/ttyS0		Set serial port (required)
      digitemp -cdigitemp.conf		Configuration File
@@ -42,8 +42,10 @@
      Logfile formats:
      1 = (default) - 1 line per sensor, time, C, F
          1 line for each sample, elapsed time, sensor #1, #2, ... tab seperated
-     2 = Reading in C
-     3 = Reading in F
+     2 = (seconds since start of measurement) & Reading in C
+     3 = (seconds since start of measurement) & Reading in F
+     4 = Unixtime(seconds since 1970-01-01 00:00:00) & Reading in C
+     5 = Unixtime(seconds since 1970-01-01 00:00:00) & Reading in F
 
      The format string uses strftime tokens plus 6 special
      ones for digitemp - %s for sensor #, %C for centigrade,
@@ -66,10 +68,8 @@
 #if !defined(AIX) && !defined(SOLARIS) && !defined(FREEBSD) && !defined(DARWIN)
 #include <getopt.h>
 #endif /* !AIX and !SOLARIS and !FREEBSD and !DARWIN */
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <time.h>
 #include <string.h>
 #include <fcntl.h>
 #include <strings.h>
@@ -77,76 +77,10 @@
 #include <mysql.h>
 #include "ad26.h"
 
-// Include endian.h
-#if DARWIN
-#include <machine/endian.h>
-#endif
-#if FREEBSD
-#include <sys/endian.h>
-#endif
-#if !defined(DARWIN) && !defined(FREEBSD)
-#include <endian.h>
-#endif
-
-#ifdef LINUX
-#ifndef OWUSB
-#ifdef LOCKDEV
-#include <lockdev.h>
-#endif
-#endif
-#endif
-
 #include "digitemp.h"
 #include "device_name.h"
 #include "ownet.h"
 #include "owproto.h"
-
-
-/* Setup the correct getopt starting point */
-#ifdef LINUX
-#define GETOPTEOF -1
-#define OPTINDSTART 0
-#endif
-
-#ifdef CYGWIN
-#define GETOPTEOF -1
-#define OPTINDSTART 0
-#endif
-
-#ifdef AIX
-#define OPTINDSTART 0
-#define GETOPTEOF 255
-#endif
- 
-#ifdef SOLARIS
-#define GETOPTEOF EOF
-#define OPTINDSTART 1
-#endif
-
-#ifdef FREEBSD
-#define GETOPTEOF EOF
-#define OPTINDSTART 1
-#endif
-
-#ifdef OPENBSD
-#define GETOPTEOF EOF
-#define OPTINDSTART 1
-#endif
-
-#ifdef NETBSD
-#define GETOPTEOF EOF
-#define OPTINDSTART 1
-#endif
-
-#ifdef DARWIN
-#define GETOPTEOF EOF
-#define OPTINDSTART 1
-#endif
- 
-#ifdef OTHER
-#define GETOPTEOF EOF
-#define OPTINDSTART 1
-#endif 
 
 
 /* For tracking down strange errors */
@@ -155,15 +89,11 @@
 extern char 	*optarg;              
 extern int	optind, opterr, optopt;
 
-#if defined(FREEBSD) || defined(DARWIN)
-extern int optreset;
-#endif /* FREEBSD or DARWIN */
-
 extern const char dtlib[];			/* Library Used            */
  
-char serial_port[40],                        /* Path to the serial port */
-     tmp_serial_port[40], 
-     serial_dev[40],				/* Device name without /dev/ */
+char serial_port[1024],				/* Path to the serial port */
+     tmp_serial_port[1024],
+     serial_dev[1024],				/* Device name without /dev/ */
      log_file[1024],                         /* Path to the log file    */
      tmp_log_file[1024],
      temp_format[80],                        /* Format for temperature readings	*/
@@ -210,8 +140,8 @@ void usage()
   printf(BANNER_2);
   printf(BANNER_3, dtlib );		         /* Report Library version */
   printf("\nUsage: digitemp [-s -i -I -U -l -r -v -t -a -d -n -o -c -e]\n");
-  printf("                -i                            Initalize .digitemprc file\n");
-  printf("                -I                            Initalize .digitemprc file w/sorted serial #s\n");
+  printf("                -i                            Initialize .digitemprc file\n");
+  printf("                -I                            Initialize .digitemprc file w/sorted serial #s\n");
   printf("                -w                            Walk the full device tree\n");
   printf("                -s /dev/ttyS0                 Set serial port\n");
   printf("                -l /var/log/temperature       Send output to logfile\n");
@@ -233,7 +163,9 @@ void usage()
   printf("\nLogfile formats:  1 = One line per sensor, time, C, F (default)\n");
   printf("                  2 = One line per sample, elapsed time, temperature in C\n");
   printf("                  3 = Same as #2, except temperature is in F\n");
-  printf("        #2 and #3 have the data seperated by tabs, suitable for import\n");
+  printf("                  4 = Same as #2, except elapsed time since (1970-01-01 00:00:00)\n");
+  printf("                  5 = Same as #4, except temperature is in F\n");
+  printf("        #2 and #3 have the data separated by tabs, suitable for import\n");
   printf("        into a spreadsheet or other graphing software.\n");
   printf("\n        The format string uses strftime tokens plus 5 special ones for\n");
   printf("        digitemp - %%s for sensor #, %%C for centigrade, %%F for fahrenheit,\n");
@@ -244,6 +176,7 @@ void usage()
   printf("        The counter format string has 2 special specifiers:\n");
   printf("        %%n is the counter # and %%C is the count in decimal.\n");
   printf("        The humidity format uses %%h for the humidity in percent\n\n");
+  printf("        The logfile may contain strftime pattern to format the filename\n");
 }
 
 
@@ -306,7 +239,6 @@ int build_tf( char *time_format, char *format, int sensor,
 {
   char	*tf_ptr,
   	*lf_ptr,
-  	*lf_ptr2,
   	*tk_ptr,
   	token[80],
   	temp[80];
@@ -325,7 +257,6 @@ int build_tf( char *time_format, char *format, int sensor,
     } else {
       /* Found a token, decide if its one of ours... */
       /* save initial pointer, grab everything up to... */
-      lf_ptr2 = lf_ptr;
       tk_ptr = token;
 
       /* 
@@ -460,7 +391,6 @@ int build_cf( char *time_format, char *format, int sensor, int page,
 {
   char	*tf_ptr,
   	*lf_ptr,
-  	*lf_ptr2,
   	*tk_ptr,
   	token[80],
   	temp[80];
@@ -479,7 +409,6 @@ int build_cf( char *time_format, char *format, int sensor, int page,
     } else {
       /* Found a token, decide if its one of ours... */
       /* save initial pointer, grab everything up to... */
-      lf_ptr2 = lf_ptr;
       tk_ptr = token;
       
       /* Take numbers, astrix, period and letters */
@@ -587,21 +516,27 @@ int build_cf( char *time_format, char *format, int sensor, int page,
 int log_string( char *line )
 {
   int fd=0;
-  
+  char time_log_file[1024];
 
   if( log_file[0] != 0 )
-  {  
-    if( (fd = open( log_file, O_CREAT | O_WRONLY | O_APPEND,
+  {
+    time_t now = time(NULL);
+
+    /* Update time_log_file name according to current time and logfile format */
+    strftime(time_log_file, sizeof(log_file) - 1, log_file, gmtime(&now));
+
+    if( (fd = open( time_log_file, O_CREAT | O_WRONLY | O_APPEND,
                           S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH ) ) == -1 )
     {
-      printf("Error opening logfile: %s\n", log_file );
+      printf("Error opening logfile: %s\n", time_log_file );
       return -1;
     }
     if( write( fd, line, strlen( line ) ) == -1)
       perror("Error loging to logfile");
     close( fd );
   } else {
-    printf( line );
+    printf( "%s", line );
+    fflush( stdout );
   }
   return 0;
 }  
@@ -626,7 +561,7 @@ int log_temp( int sensor, float temp_c, unsigned char *sn, MYSQL *conn )
     /* MySQL mods by Nick, more info at http://illx.org/digitemp */
     /* MySQL code has now been implemented on digitemp 3.5       */
     /* MySQL code can now handle custom table format             */
-    if(log_type == 4) {
+    if(log_type == 6) {
        char query[2048], snt[1024];
  
        sprintf(snt, "%02X%02X%02X%02X%02X%02X%02X%02X",
@@ -757,11 +692,13 @@ int log_humidity( int sensor, double temp_c, int humidity, unsigned char *sn )
     switch( log_type )
     {
       /* Multiple Centigrade temps per line */
-      case 2:     sprintf( temp, "\t%3.2f", temp_c );
+      case 2:
+      case 4:     sprintf( temp, "\t%3.2f", temp_c );
                   break;
 
       /* Multiple Fahrenheit temps per line */
-      case 3:     sprintf( temp, "\t%3.2f", c2f(temp_c) );
+      case 3:
+      case 5:     sprintf( temp, "\t%3.2f", c2f(temp_c) );
                   break;
 
       default:
@@ -819,67 +756,49 @@ void show_scratchpad( unsigned char *scratchpad, int sensor_family )
   char temp[80];
   int i;
   
-  if( log_file[0] != 0 )
+  /* Log and/or print the scratchpad diagnostics */
+  switch( sensor_family )
   {
-    switch( sensor_family )
-    {
-      case DS1820_FAMILY:
-        sprintf( temp, "  Temperature   : 0x%02X\n", scratchpad[1] );
-        sprintf( temp, "  Sign          : 0x%02X\n", scratchpad[2] );
-        sprintf( temp, "  TH            : 0x%02X\n", scratchpad[3] );
-        sprintf( temp, "  TL            : 0x%02X\n", scratchpad[4] );
-        sprintf( temp, "  Remain        : 0x%02X\n", scratchpad[7] );
-        sprintf( temp, "  Count Per C   : 0x%02X\n", scratchpad[8] );
-        sprintf( temp, "  CRC           : 0x%02X\n", scratchpad[9] );
-        break;
-
-      case DS18B20_FAMILY:
-      case DS1822_FAMILY:
-      case DS28EA00_FAMILY:
-        sprintf( temp, "  Temp. LSB     : 0x%02X\n", scratchpad[1] );
-        sprintf( temp, "  Temp. MSB     : 0x%02X\n", scratchpad[2] );
-        sprintf( temp, "  TH            : 0x%02X\n", scratchpad[3] );
-        sprintf( temp, "  TL            : 0x%02X\n", scratchpad[4] );
-        sprintf( temp, "  Config Reg.   : 0x%02X\n", scratchpad[5] );
-        sprintf( temp, "  CRC           : 0x%02X\n", scratchpad[9] );
-        break;
-        
-      case DS2422_FAMILY:
-      case DS2423_FAMILY:
+    case DS1820_FAMILY:
+      sprintf( temp, "  Temperature   : 0x%02X\n", scratchpad[1] );
+      log_string( temp );
+      sprintf( temp, "  Sign          : 0x%02X\n", scratchpad[2] );
+      log_string( temp );
+      sprintf( temp, "  TH            : 0x%02X\n", scratchpad[3] );
+      log_string( temp );
+      sprintf( temp, "  TL            : 0x%02X\n", scratchpad[4] );
+      log_string( temp );
+      sprintf( temp, "  Remain        : 0x%02X\n", scratchpad[7] );
+      log_string( temp );
+      sprintf( temp, "  Count Per C   : 0x%02X\n", scratchpad[8] );
+      log_string( temp );
+      sprintf( temp, "  CRC           : 0x%02X\n", scratchpad[9] );
+      log_string( temp );
+      break;
+  
+    case DS18B20_FAMILY:
+    case DS1822_FAMILY:
+    case DS28EA00_FAMILY:
+      sprintf( temp, "  Temp. LSB     : 0x%02X\n", scratchpad[1] );
+      log_string( temp );
+      sprintf( temp, "  Temp. MSB     : 0x%02X\n", scratchpad[2] );
+      log_string( temp );
+      sprintf( temp, "  TH            : 0x%02X\n", scratchpad[3] );
+      log_string( temp );
+      sprintf( temp, "  TL            : 0x%02X\n", scratchpad[4] );
+      log_string( temp );
+      sprintf( temp, "  Config Reg.   : 0x%02X\n", scratchpad[5] );
+      log_string( temp );
+      sprintf( temp, "  CRC           : 0x%02X\n", scratchpad[9] );
+      log_string( temp );
+      break;
       
-        break;  
-    } /* sensor_family switch */
-  } else {
-    switch( sensor_family )
-    {
-      case DS1820_FAMILY:
-        printf("  Temperature   : 0x%02X\n", scratchpad[1] );
-        printf("  Sign          : 0x%02X\n", scratchpad[2] );
-        printf("  TH            : 0x%02X\n", scratchpad[3] );
-        printf("  TL            : 0x%02X\n", scratchpad[4] );
-        printf("  Remain        : 0x%02X\n", scratchpad[7] );
-        printf("  Count Per C   : 0x%02X\n", scratchpad[8] );
-        printf("  CRC           : 0x%02X\n", scratchpad[9] );
-        break;
-
-      case DS18B20_FAMILY:
-      case DS1822_FAMILY:
-      case DS28EA00_FAMILY:
-        printf( "  Temp. LSB     : 0x%02X\n", scratchpad[1] );
-        printf( "  Temp. MSB     : 0x%02X\n", scratchpad[2] );
-        printf( "  TH            : 0x%02X\n", scratchpad[3] );
-        printf( "  TL            : 0x%02X\n", scratchpad[4] );
-        printf( "  Config Reg.   : 0x%02X\n", scratchpad[5] );
-        printf( "  CRC           : 0x%02X\n", scratchpad[9] );
-        break;
-
-      case DS2422_FAMILY:
-      case DS2423_FAMILY:
-      
-        break;  
-    } /* sensor_family switch */
-  } /* if log_file */
-
+    case DS2422_FAMILY:
+    case DS2423_FAMILY:
+    
+      break;  
+  } /* sensor_family switch */
+  
   /* Dump the complete contents of the scratchpad */
   for( i = 0; i < 10; i++ )
   {
@@ -917,16 +836,13 @@ int read_temperature( int sensor_family, int sensor, MYSQL *conn )
   unsigned char lastcrc8,
                 scratchpad[30],    /* Scratchpad block from the sensor     */
                 TempSN[8];
-  int     x,
-          j,
+  int     j,
           try,                     /* Number of tries at reading device    */
-          strong_err,              /* Error with strong pullup?            */
           ds1820_try,              /* Allow ds1820 glitch 1 time           */
           ds18s20_try;             /* Allow DS18S20 error 1 time           */
   float   temp_c,                  /* Calculated temperature in Centigrade */
           hi_precision;
 
-  x = 0;  
   ds1820_try = 0;
   ds18s20_try = 0;  
   temp_c = 0;
@@ -945,11 +861,7 @@ int read_temperature( int sensor_family, int sensor, MYSQL *conn )
       msDelay( read_time );
       
       /* Turn off the strong pullup */
-      if( owLevel( 0, MODE_NORMAL ) != MODE_NORMAL )
-      {
-        strong_err = 2;
-      }
-
+      owLevel( 0, MODE_NORMAL );
 
       /* Now read the scratchpad from the device */
       if( owAccess(0) )
@@ -1031,18 +943,20 @@ int read_temperature( int sensor_family, int sensor, MYSQL *conn )
             switch( log_type )
             {
               /* Multiple Centigrade temps per line */
-              case 2:     sprintf( temp, "\t%3.2f", temp_c );
+              case 2:
+              case 4:     sprintf( temp, "\t%3.2f", temp_c );
                           log_string( temp );
                           break;
 
               /* Multiple Fahrenheit temps per line */
-              case 3:     sprintf( temp, "\t%3.2f", c2f(temp_c) );
+              case 3:
+              case 5:     sprintf( temp, "\t%3.2f", c2f(temp_c) );
                           log_string( temp );
                           break;
-	      /* MySQL log_type */
-	      case 4:    owSerialNum( 0, &TempSN[0], TRUE );
-		log_temp( sensor, temp_c, TempSN, conn );
-		break;
+              /* MySQL log_type */
+              case 6:    owSerialNum( 0, &TempSN[0], TRUE );
+                         log_temp( sensor, temp_c, TempSN, conn );
+                         break;
 
               default:    owSerialNum( 0, &TempSN[0], TRUE );
                           log_temp( sensor, temp_c, TempSN, 0 );
@@ -1066,9 +980,11 @@ int read_temperature( int sensor_family, int sensor, MYSQL *conn )
               switch( log_type )
               {
             	/* Multiple Centigrade temps per line */
-                case 2:
+                 case 2:
+                 case 4:
                  /* Multiple Fahrenheit temps per line */
-                 case 3:     sprintf( temp, "\t%3.2f", (double) 0 );
+                 case 3:
+                 case 5:     sprintf( temp, "\t%3.2f", (double) 0 );
                              log_string( temp );
                              break;
              
@@ -1118,7 +1034,9 @@ int read_counter( int sensor_family, int sensor )
         {
           /* Multiple Centigrade temps per line */
           case 2:
-          case 3:     sprintf( temp, "\t%ld", counter_value );
+          case 3:
+          case 4:
+          case 5:     sprintf( temp, "\t%ld", counter_value );
                       log_string( temp );
                       break;
 
@@ -1127,7 +1045,7 @@ int read_counter( int sensor_family, int sensor )
                       break;
         } /* switch( log_type ) */
       }
-    }    
+    }
   } else if( sensor_family == DS2423_FAMILY ) {
     /* Read Pages 14, 15 */
     for( page=14; page<=15; page++ )
@@ -1139,7 +1057,9 @@ int read_counter( int sensor_family, int sensor )
         {
           /* Multiple Centigrade temps per line */
           case 2:
-          case 3:     sprintf( temp, "\t%ld", counter_value );
+          case 3:
+          case 4:
+          case 5:     sprintf( temp, "\t%ld", counter_value );
                       log_string( temp );
                       break;
 
@@ -1148,7 +1068,7 @@ int read_counter( int sensor_family, int sensor )
                       break;
         } /* switch( log_type ) */
       }
-    }    
+    }
   }
 
   return FALSE;
@@ -1186,14 +1106,16 @@ int read_ds2406( int sensor_family, int sensor )
       switch( log_type )
       {
         /* Multiple Centigrade temps per line */
-        case 2:     sprintf( temp, "\t%02x,%02x", pio>>8, pio&0xff );
+        case 2:
+        case 4:     sprintf( temp, "\t%02x,%02x", pio>>8, pio&0xff );
                     break;
 
         /* Multiple Fahrenheit temps per line */
-        case 3:     sprintf( temp, "\t%02x,%02x", pio>>8, pio&0xff);
+        case 3:
+        case 5:     sprintf( temp, "\t%02x,%02x", pio>>8, pio&0xff);
                     break;
 
-        default:    
+        default:
                     sprintf( time_format, "%%b %%d %%H:%%M:%%S Sensor %d PIO: %02x,%02x, PIO-A: %s%s", sensor, pio>>8, pio&0xff,
 			((pio&0x1000)!=0)? // Port A latch: there was a change
 				(((pio&0x0400)!=0)?
@@ -1238,55 +1160,62 @@ int read_ds2406( int sensor_family, int sensor )
    ----------------------------------------------------------------------- */
 int read_ds2438( int sensor_family, int sensor )
 {
-  double	temperature;
+  double	temp_c;
   float		vdd,
   		ad;
   char		temp[1024],
   		time_format[160];
   time_t	mytime;
   int           cad = 0;
+  int           try;
+  int           result = FALSE;
 
-  
-  if( sensor_family == DS2438_FAMILY )
+  for( try = 0; try < MAX_READ_TRIES; try++ )
   {
-    temperature = Get_Temperature(0);
+    /* Read the temperature */
+    temp_c = Get_Temperature(0);
+    if (temp_c == -999.0)
+        return result;
 
-    /* Read Vdd */
-    vdd = Volt_Reading(0, 1, &cad);
-
-    /* Read A/D */
-    ad = Volt_Reading(0, 0, NULL);
-
-    mytime = time(NULL);
-    if( mytime )
+    /* Read Vdd, the supply voltage */
+    if( (vdd = Volt_Reading(0, 1, &cad)) != -1.0 )
     {
-      /* Log the temperature */
-      switch( log_type )
+      /* Read A/D reading from the humidity sensor */
+      if( (ad = Volt_Reading(0, 0, NULL)) != -1.0 )
       {
-        /* Multiple Centigrade temps per line */
-        case 2:     sprintf( temp, "\t%3.2f", temperature );
-                    break;
-
-        /* Multiple Fahrenheit temps per line */
-        case 3:     sprintf( temp, "\t%3.2f", c2f(temperature) );
-                    break;
-
-        default:    
-                    sprintf( time_format, "%%b %%d %%H:%%M:%%S Sensor %d VDD: %0.2f AD: %0.2f CAD: %d C: %0.2f", sensor, vdd, ad, cad, temperature );
-                    /* Handle the time format tokens */
-                    strftime( temp, 1024, time_format, localtime( &mytime ) );
-                    strcat( temp, "\n" );
-                    break;
-      } /* switch( log_type ) */
-    } else {
-      sprintf( temp, "Time Error\n" );
+        result = TRUE;
+        break;
+      }
     }
 
-    /* Log it to stdout, logfile or both */
-    log_string( temp );
+    owTouchReset(0);
+    msDelay(read_time);
   }
 
-  return FALSE;
+  /* Log the temperature */
+  mytime = time(NULL);
+  switch( log_type )
+  {
+      /* Multiple Centigrade temps per line */
+      case 2:     sprintf(temp, "\t%3.2f", temp_c);
+                  break;
+
+      /* Multiple Fahrenheit temps per line */
+      case 3:     sprintf(temp, "\t%3.2f", c2f(temp_c));
+                  break;
+
+      default:
+                  sprintf(time_format, "%%b %%d %%H:%%M:%%S Sensor %d VDD: %0.2f AD: %0.2f CAD: %d C: %0.2f", sensor, vdd, ad, cad, temp_c);
+                  /* Handle the time format tokens */
+                  strftime(temp, 1024, time_format, localtime(&mytime));
+                  strcat(temp, "\n");
+                  break;
+  } /* switch( log_type ) */
+
+  /* Log it to stdout, logfile or both */
+  log_string(temp);
+
+  return TRUE;
 }
 
 
@@ -1340,35 +1269,34 @@ int read_humidity( int sensor_family, int sensor )
   double	temp_c;			/* Converted temperature in degrees C */
   float		sup_voltage,		/* Supply voltage in volts            */
 		hum_voltage,		/* Humidity sensor voltage in volts   */
-		humidity;		/* Calculated humidity in %RH         */
+		humidity = 0.0;		/* Calculated humidity in %RH         */
   unsigned char	TempSN[8];
   int		try;  
+  int           result = FALSE;
 	
   for( try = 0; try < MAX_READ_TRIES; try++ )
   {
+    /* Read the temperature */
+    temp_c = Get_Temperature(0);
+    if (temp_c == -999.0)
+        return result;
+
     /* Read Vdd, the supply voltage */
     if( (sup_voltage = Volt_Reading(0, 1, NULL)) != -1.0 )
     {
       /* Read A/D reading from the humidity sensor */
       if( (hum_voltage = Volt_Reading(0, 0, NULL)) != -1.0 )
       {
-        /* Read the temperature */
-        temp_c = Get_Temperature(0);
-
         /* Convert the measured voltage to humidity */
         humidity = (((hum_voltage/sup_voltage) - 0.16) * 161.29)
                       / (1.0546 - (0.00216 * temp_c));
-	if( humidity > 100.0 ) 
-	  humidity = 100.0;
-	else if( humidity < 0.0 )
-	  humidity = 0.0;
+        if( humidity > 100.0 )
+          humidity = 100.0;
+        else if( humidity < 0.0 )
+          humidity = 0.0;
 
-        /* Log the temperature and humidity */
-        owSerialNum( 0, &TempSN[0], TRUE );
-        log_humidity( sensor, temp_c, humidity, TempSN );
-
-        /* Good conversion finished */
-        return TRUE;
+        result = TRUE;
+        break;
       }
     }
 
@@ -1376,7 +1304,11 @@ int read_humidity( int sensor_family, int sensor )
     msDelay(read_time);
   }
 
-  return FALSE;
+  /* Log the temperature and humidity */
+  owSerialNum( 0, &TempSN[0], TRUE );
+  log_humidity( sensor, temp_c, humidity, TempSN );
+
+  return result;
 }
 
 
@@ -1583,23 +1515,24 @@ int read_device( struct _roms *sensor_list, int sensor, MYSQL *conn )
       status = read_counter( sensor_family, sensor );
       break;
 
-	case DS2438_FAMILY:
-		// What type is it?
-		{
-		int page;
-		for( page=3; page<8; page++)
-		{
-			get_ibl_type( 0, page, 0);
-      	}}
-		if( opts & OPT_DS2438 )
-		{
-			status = read_ds2438( sensor_family, sensor );
-		} else {
-			status = read_humidity( sensor_family, sensor );
-		}
-		break;
-  }
-  
+    case DS2438_FAMILY:
+    // What type is it?
+        {
+            int page;
+            for( page=3; page<8; page++)
+            {
+                get_ibl_type( 0, page, 0);
+            }
+        }
+        if( opts & OPT_DS2438 )
+        {
+            status = read_ds2438( sensor_family, sensor );
+        } else {
+            status = read_humidity( sensor_family, sensor );
+        }
+        break;
+    }
+
   return status;
 }
 
@@ -1675,7 +1608,7 @@ int read_rcfile( char *fname, struct _roms *sensor_list )
     return 1;
   }
   
-  while( fgets( temp, 80, fp ) != 0 )
+  while( fgets( temp, sizeof(temp), fp ) != 0 )
   {
     if( (temp[0] == '\n') || (temp[0] == '#') )
       continue;
@@ -1686,21 +1619,26 @@ int read_rcfile( char *fname, struct _roms *sensor_list )
     {
       ptr = strtok( NULL, " \t\n" );
       strncpy( serial_port, ptr, sizeof(serial_port)-1 );
+      serial_port[sizeof(serial_port)-1] = 0x00;
     } else if( strncasecmp( "LOG_TYPE", ptr, 8 ) == 0 ) {
       ptr = strtok( NULL, " \t\n");
       log_type = atoi( ptr );
     } else if( strncasecmp( "LOG_FORMAT", ptr, 10 ) == 0 ) {
       ptr = strtok( NULL, "\"\n");
       strncpy( temp_format, ptr, sizeof(temp_format)-1 );
+      temp_format[sizeof(temp_format)-1] = 0x00;
     } else if( strncasecmp( "CNT_FORMAT", ptr, 10 ) == 0 ) {
       ptr = strtok( NULL, "\"\n");
       strncpy( counter_format, ptr, sizeof(counter_format)-1 );
+      counter_format[sizeof(counter_format)-1] = 0x00;
     } else if( strncasecmp( "HUM_FORMAT", ptr, 10 ) == 0 ) {
       ptr = strtok( NULL, "\"\n");
       strncpy( humidity_format, ptr, sizeof(humidity_format)-1 );
+      humidity_format[sizeof(humidity_format)-1] = 0x00;
     } else if( strncasecmp( "LOG", ptr, 3 ) == 0 ) {
       ptr = strtok( NULL, " \t\n" );
       strncpy( log_file, ptr, sizeof(log_file)-1 );
+      log_file[sizeof(log_file)-1] = 0x00;
     } else if( strncasecmp( "FAIL_TIME", ptr, 9 ) == 0 ) {
 
     } else if( strncasecmp( "READ_TIME", ptr, 9 ) == 0 ) {
@@ -1716,6 +1654,7 @@ int read_rcfile( char *fname, struct _roms *sensor_list )
         if( ( sensor_list->roms = malloc( sensors * 8 ) ) == NULL )
         {
           fprintf( stderr, "Error reserving memory for %d sensors\n", sensors );
+          fclose( fp );
           return -1;
         }
         sensor_list->max = sensors; 
@@ -1724,7 +1663,12 @@ int read_rcfile( char *fname, struct _roms *sensor_list )
       /* Main LAN sensors */
       ptr = strtok( NULL, " \t\n" );
       sensors = atoi( ptr );
-      
+      if ( sensors >= sensor_list->max ) {
+          fprintf( stderr, "Error, too many ROM entries. Check SENSORS value.\n");
+          fclose( fp );
+          return -1;
+      }
+
       /* Read the 8 byte ROM address */
       for( x = 0; x < 8; x++ )
       {
@@ -1742,8 +1686,6 @@ int read_rcfile( char *fname, struct _roms *sensor_list )
       {
 	      fprintf( stderr, "Failed to allocate %d bytes for coupler linked list\n", (int) sizeof( struct _coupler ) );
           free_coupler(0);
-          if( sensor_list != NULL )
-	          free(sensor_list);
 #ifndef OWUSB
 	      owRelease(0);
 #else
@@ -1815,8 +1757,6 @@ int read_rcfile( char *fname, struct _roms *sensor_list )
           {
             fprintf( stderr, "Failed to allocate %d bytes for main branch\n", c_ptr->num_main * 8 );
             free_coupler(0);
-	    if( sensor_list != NULL )
-	      free( sensor_list );
 #ifndef OWUSB
             owRelease(0);
 #else
@@ -1841,8 +1781,6 @@ int read_rcfile( char *fname, struct _roms *sensor_list )
           {
             fprintf( stderr, "Failed to allocate %d bytes for aux branch\n", c_ptr->num_aux * 8 );
             free_coupler(0);
-	    if( sensor_list != NULL )
-	      free( sensor_list );
 #ifndef OWUSB
             owRelease(0);
 #else
@@ -1862,7 +1800,6 @@ int read_rcfile( char *fname, struct _roms *sensor_list )
       } /* c_ptr Pointing somewhere check */
     } else {
       fprintf( stderr, "Error reading rcfile: %s\n", fname );
-      free( sensor_list );
       fclose( fp );
       return -1;
     }
@@ -2326,7 +2263,7 @@ int Init1WireLan( struct _roms *sensor_list )
   /* Free up the coupler list */
   free_coupler(0);
 
-  /* Initalize the coupler pointer */
+  /* Initialize the coupler pointer */
   coupler_end = coupler_top;
 
   if( !(opts & OPT_QUIET) )
@@ -2638,7 +2575,7 @@ int main( int argc, char *argv[] )
 
   if( argc <= 1 )
   {
-    fprintf(stderr,"Error! Not enough arguements.\n\n");
+    fprintf(stderr,"Error! Not enough arguments.\n\n");
     usage();
     return -1;
   }
@@ -2675,10 +2612,9 @@ int main( int argc, char *argv[] )
   /* Unless the -i parameter is specified, then changes are saved to    */
   /* .digitemprc file                                                   */
 
-  optind = OPTINDSTART;
   opterr = 1;
 
-  while( (c = getopt(argc, argv, option_list)) != GETOPTEOF )
+  while( (c = getopt(argc, argv, option_list)) != -1 )
   {
     /* Process the command line arguments */
     switch( c )
@@ -2686,6 +2622,7 @@ int main( int argc, char *argv[] )
       case 'c': if( optarg )			/* Configuration file	*/
 		{
 		  strncpy( conf_file, optarg, sizeof( conf_file ) - 1 );
+                  conf_file[sizeof(conf_file)-1] = 0x00;
 		}
 		break;
 
@@ -2695,7 +2632,7 @@ int main( int argc, char *argv[] )
       case 'w': opts |= OPT_WALK;               /* Walk the LAN         */
                 break;
     
-      case 'i':	opts |= OPT_INIT;		/* Initalize the s#'s	*/
+      case 'i':	opts |= OPT_INIT;		/* Initialize the s#'s	*/
       		break;
       		
       case 'r':	tmp_read_time = atoi(optarg);	/* Read delay in mS	*/
@@ -2707,12 +2644,14 @@ int main( int argc, char *argv[] )
       case 's': if(optarg)			/* Serial port		*/
       		{
       		  strncpy( tmp_serial_port, optarg, sizeof(tmp_serial_port) - 1 );
+                  tmp_serial_port[sizeof(tmp_serial_port) - 1] = 0x00;
       		}
       		break;
       		
       case 'l': if(optarg)			/* Log Filename		*/
       		{
       		  strncpy( tmp_log_file, optarg, sizeof( tmp_log_file ) - 1);
+                  tmp_log_file[sizeof( tmp_log_file ) - 1] = 0x00;
       		}
       		break;
       		
@@ -2749,10 +2688,12 @@ int main( int argc, char *argv[] )
 		    tmp_log_type = atoi(optarg);
 		  } else {
 		    /* Not a nuber, get the string */
-                    if( strlen( optarg ) > sizeof(tmp_temp_format)-1 )
+                    if( strlen( optarg ) > sizeof(tmp_temp_format)-1 ) {
                       printf("Temperature format string too long! > %d\n", (int) sizeof(tmp_temp_format)-1);
-                    else
+                    } else {
                       strncpy( tmp_temp_format, optarg, sizeof(tmp_temp_format)-1 );
+                      tmp_temp_format[sizeof(tmp_temp_format)-1] = 0x00;
+                    }
 		    tmp_log_type=0;
 		  }
 		}
@@ -2760,19 +2701,23 @@ int main( int argc, char *argv[] )
 		
       case 'O': if(optarg)			/* Counter Logfile format	*/
 		{
-                  if( strlen( optarg ) > sizeof(tmp_counter_format)-1 )
+                  if( strlen( optarg ) > sizeof(tmp_counter_format)-1 ) {
                     printf("Counter format string too long! > %d\n", (int) sizeof(tmp_counter_format)-1);
-                  else
+                  } else {
                     strncpy( tmp_counter_format, optarg, sizeof(tmp_counter_format)-1 );
+                    tmp_counter_format[sizeof(tmp_counter_format)-1] = 0x00;
+                  }
 		}
 		break;
 		
       case 'H': if(optarg)			/* Humidity Logfile format	*/
 		{
-                  if( strlen( optarg ) > sizeof(tmp_humidity_format)-1 )
+                  if( strlen( optarg ) > sizeof(tmp_humidity_format)-1 ) {
                     printf("Humidity format string too long! > %d\n", (int) sizeof(tmp_humidity_format)-1);
-                  else
+                  } else {
                     strncpy( tmp_humidity_format, optarg, sizeof(tmp_humidity_format)-1 );
+                    tmp_humidity_format[sizeof(tmp_humidity_format)-1] = 0x00;
+                  }
 		}
 		break;
       case 'e': opts |= OPT_DBLOG;              /* Log to MySQL */
@@ -2813,10 +2758,12 @@ int main( int argc, char *argv[] )
   
   if (tmp_serial_port[0] != 0) {
 	strncpy( serial_port, tmp_serial_port, sizeof(serial_port)-1 );
+        serial_port[sizeof(serial_port)-1] = 0x00;
   }
   
   if (tmp_log_file[0] != 0) {
 	strncpy( log_file, tmp_log_file, sizeof(log_file)-1 );
+        log_file[sizeof(log_file)-1] = 0x00;
   }
   
   if (tmp_log_type != -1) {
@@ -2824,15 +2771,18 @@ int main( int argc, char *argv[] )
     if ( tmp_log_type == 0 )
     {
       strncpy( temp_format, tmp_temp_format, sizeof(temp_format)-1 );
+      temp_format[sizeof(temp_format)-1] = 0x00;
     }
   }
 
   if( tmp_counter_format[0] != 0 ) {
     strncpy( counter_format, tmp_counter_format, sizeof(counter_format)-1 );
+    counter_format[sizeof(counter_format)-1] = 0x00;
   }
   
   if( tmp_humidity_format[0] != 0 ) {
     strncpy( humidity_format, tmp_humidity_format, sizeof(humidity_format)-1 );
+    humidity_format[sizeof(humidity_format)-1] = 0x00;
   }
   
   /* Show the copyright banner? */
@@ -2846,7 +2796,7 @@ int main( int argc, char *argv[] )
   /* Check to see if the device file actually exists */
   if( !file_exists( serial_port ) )
   {
-    fprintf( stderr, "Error, serial port '%s' does not exists!\n", serial_port );
+    fprintf( stderr, "Error, serial port '%s' does not exist!\n", serial_port );
 
     if( sensor_list.roms != NULL )
       free( sensor_list.roms );
@@ -2869,46 +2819,6 @@ int main( int argc, char *argv[] )
 
     exit(EXIT_NOPERM);
   }
-
-  /* Lock our use of the serial port, exit if it is in use */
-#ifdef LINUX
-#ifndef OWUSB
-#ifdef LOCKDEV
-  /* First turn serial_port into just the final device name */
-  if( !(p = strrchr( serial_port, '/' )) )
-  {
-    fprintf( stderr, "Error getting serial device from %s\n", serial_port );
-    
-    if( sensor_list.roms != NULL )
-      free( sensor_list.roms );
-
-    if( coupler_top != NULL )
-      free_coupler(1);
-
-    exit(EXIT_DEVERR);
-  }
-  strncpy( serial_dev, p+1, sizeof(serial_dev)-1 );
-
-  if( (pid = dev_lock( serial_dev )) != 0 )
-  {
-    if( pid == -1 )
-    {
-      fprintf( stderr, "Error locking %s. Do you have permission to write to /var/lock?\n", serial_dev );
-    } else {
-      fprintf( stderr, "Error, %s is locked by process %d\n", serial_dev, pid );
-    }
-      
-    if( sensor_list.roms != NULL )
-      free( sensor_list.roms );
-
-    if( coupler_top != NULL )
-      free_coupler(1);
-
-    exit(EXIT_LOCKED);
-  }
-#endif		/* LOCKDEV	*/
-#endif		/* OWUSB	*/
-#endif		/* LINUX 	*/
 #endif		/* !OWUSB 	*/
 
   /* Connect to the MLan network */
@@ -2930,13 +2840,6 @@ int main( int argc, char *argv[] )
     if( coupler_top != NULL )
       free_coupler(0);
 
-#ifdef LINUX
-#ifndef OWUSB
-#ifdef LOCKDEV
-    dev_unlock( serial_dev, 0 );
-#endif		/* LOCKDEV	*/
-#endif		/* OWUSB	*/
-#endif		/* LINUX	*/
     exit(EXIT_ERR);
   }
 
@@ -2958,20 +2861,12 @@ int main( int argc, char *argv[] )
       owRelease(0, temp );
 #endif /* OWUSB */
 
-#ifdef LINUX
-#ifndef OWUSB
-#ifdef LOCKDEV
-    dev_unlock( serial_dev, 0 );
-#endif		/* LOCKDEV	*/
-#endif		/* OWUSB	*/
-#endif		/* LINUX	*/
-
     exit(EXIT_OK);
   }
 
 
   /* ------------------------------------------------------------------*/
-  /* Should we initalize the sensors?                                  */
+  /* Should we initialize the sensors?                                  */
   /* This should store the serial numbers to the .digitemprc file      */
   if( opts & OPT_INIT )
   {
@@ -2991,21 +2886,19 @@ int main( int argc, char *argv[] )
       fprintf( stderr, "USB ERROR: %s\n", temp );
 #endif /* OWUSB */
 
-#ifdef LINUX
-#ifndef OWUSB
-#ifdef LOCKDEV
-      dev_unlock( serial_dev, 0 );
-#endif		/* LOCKDEV	*/
-#endif		/* OWUSB	*/
-#endif		/* LINUX	*/
-
       exit(EXIT_ERR);
     }
   }
 
   
   /* Record the starting time */
-  start_time = time(NULL);
+  switch (log_type) {
+    case 4:
+    case 5:   start_time = 0;           /* Relative to 1970-01-01 00:00:00 (Unixtime) */
+              break;
+    default:  start_time = time(NULL);  /* Relative to now */
+              break;
+  }
 
   /* Sample the prescribed number of times, 0=infinity */
   for( x = 0;num_samples==0 || x < num_samples; x++ )
@@ -3019,7 +2912,9 @@ int main( int argc, char *argv[] )
          start of the line
        */
       case 2:
-      case 3:	sprintf(temp, "%ld", elapsed_time );
+      case 3:
+      case 4:
+      case 5:	sprintf(temp, "%ld", elapsed_time );
                 log_string( temp );
 		break;
       default:
@@ -3057,7 +2952,7 @@ int main( int argc, char *argv[] )
 	exit(1);
       }
       
-      log_type = 4;
+      log_type = 6;
       read_all_and_dblog( &sensor_list, conn );
       mysql_close(conn);
     }
@@ -3068,7 +2963,9 @@ int main( int argc, char *argv[] )
          start of the line
        */
       case 2:
-      case 3:	log_string( "\n" );
+      case 3:
+      case 4:
+      case 5:	log_string( "\n" );
 		break;
       default:
 		break;
@@ -3105,14 +3002,6 @@ int main( int argc, char *argv[] )
 #else
   owRelease(0, temp );
 #endif /* OWUSB */
-
-#ifdef LINUX
-#ifndef OWUSB
-#ifdef LOCKDEV
-  dev_unlock( serial_dev, 0 );
-#endif		/* LOCKDEV	*/
-#endif		/* OWUSB	*/
-#endif		/* LINUX	*/
 
   exit(EXIT_OK);
 }

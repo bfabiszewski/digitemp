@@ -37,11 +37,13 @@
 #include "usb.h"
 #include <errno.h>
 #include <time.h>
+#include <assert.h>
 #include "usblnk.h"
 
 /* wrap in Linux? */
 #include <sys/time.h>
 /* Wrap in Linux? */
+#include <string.h>
 
 #define TIMEOUT_VALUE	5000
 
@@ -78,28 +80,62 @@ int owTouchReset(int portnum)
 {
 	int result; 
 	char buffer[0x20];
+	int count = 20;
+	int got_result = 0;
+	struct timespec to_wait = {0, 1000000}; // Wait for 1ms between polls
+	int keep_going = 1;
 
-	/* issue the 1-wire reset */
+	/* issue the 1-wire reset. Ensure the NTF bit is set so we can
+	   get results. */
 	result = usb_control_msg(usb_dev_handle_list[portnum], 0x40,
-			COMM_CMD, 0x0043, 0x0000, NULL, 0x0, TIMEOUT_VALUE);
+			COMM_CMD, 0x0443, 0x0000, NULL, 0x0, TIMEOUT_VALUE);
 	//printf("result is %d\n", result);
 
-	/* repeat until the unit is not idle */
+	/* repeat until:
+		- an error occurs, or
+		- the unit is idle, and we've either got a result, or
+			waited long enough that none is likely to come */
 	do {
+		memset(buffer, 0x00, sizeof(buffer));
 		/* get the status */
-		result = usb_bulk_read(usb_dev_handle_list[portnum], 0x81,
+		result = usb_interrupt_read(usb_dev_handle_list[portnum], 0x81,
 				buffer, 0x20, TIMEOUT_VALUE);
 		//printf("result is %d\n", result);
+		if (result < 0) {
+			keep_going = 0;
+		} else {
+			assert(result >= 0x10);
+			if (result > 0x10) {
+				got_result = 1;
+			}
+			if (buffer[0x08] & 0x20) {
+				/* Device is idle. Finish if we have a result
+				   or if we give up. */
+				if (got_result) {
+					keep_going = 0;
+				} else {
+					count--;
+					if (count == 0) {
+						keep_going = 0;
+					}
+				}
+			}
+		}
+		if (keep_going) {
+			nanosleep(&to_wait, NULL);
+		}
 
 		//for (result = 0; result < 0x20; result++) {
 		//	printf("%02X: %02X\n", result, buffer[result]);
 		//}
-	} while (!(buffer[0x08] & 0x20) && !(result < 0));
+	} while (keep_going);
 
 	if (result < 0)
 		return FALSE;
 
-	if (buffer[0x10] & 0x01) {
+        /* Only declare there was nothing on the bus if we got a result
+           otherwise we may just have missed it due to timing issues */
+	if (got_result && (buffer[0x10] & 0x01)) {
 		return FALSE;
 	} else {
 		return TRUE;
@@ -132,6 +168,7 @@ int owTouchBit(int portnum, SMALLINT sendbit)
 
 	/* repeat until the unit is not idle */
 	do {
+		memset(buffer, 0x00, sizeof(buffer));
 		/* get the status */
 		result = usb_bulk_read(usb_dev_handle_list[portnum], 0x81,
 				buffer, 0x20, TIMEOUT_VALUE);
@@ -180,6 +217,7 @@ int owTouchByte(int portnum, SMALLINT sendbyte)
 
 	/* repeat until the unit is not idle */
 	do {
+		memset(buffer, 0x00, sizeof(buffer));
 		/* get the status */
 		result = usb_bulk_read(usb_dev_handle_list[portnum], 0x81,
 				buffer, 0x20, TIMEOUT_VALUE);
@@ -256,6 +294,7 @@ int owSpeed(int portnum, SMALLINT new_speed)
 
 	/* repeat until the unit is not idle */
 	do {
+		memset(buffer, 0x00, sizeof(buffer));
 		/* get the status */
 		result = usb_bulk_read(usb_dev_handle_list[portnum], 0x81,
 				buffer, 0x20, TIMEOUT_VALUE);
@@ -273,6 +312,7 @@ int owSpeed(int portnum, SMALLINT new_speed)
 
 	/* repeat until the unit is not idle */
 	do {
+		memset(buffer, 0x00, sizeof(buffer));
 		/* get the status */
 		result = usb_bulk_read(usb_dev_handle_list[portnum], 0x81,
 				buffer, 0x20, TIMEOUT_VALUE);
@@ -333,6 +373,7 @@ int owLevel(int portnum, SMALLINT new_level)
 
 	/* repeat until the unit is not idle */
 	do {
+		memset(buffer, 0x00, sizeof(buffer));
 		/* get the status */
 		result = usb_bulk_read(usb_dev_handle_list[portnum], 0x81,
 				buffer, 0x20, TIMEOUT_VALUE);
