@@ -16,9 +16,12 @@ VPATH	= $(SRCDIR)
 CFLAGS ?= -O2 -Wall # -g
 
 # Mandatory additions to CFLAGS
-EXTRACFLAGS	= -I$(SRCDIR)/src -I$(SRCDIR)/userial -I/usr/include/mysql
-LIBS    += -L/usr/lib/mysql -lmysqlclient -lm -lz
+EXTRACFLAGS	= -I$(SRCDIR)/src -I$(SRCDIR)/userial
 override CFLAGS	+= $(EXTRACFLAGS)
+
+# Mysql
+MYSQLFLAGS = -I/usr/include/mysql
+MYSQLLIBS = -L/usr/lib/mysql -lmysqlclient -lm -lz
 
 OBJS		=	src/digitemp.o src/device_name.o src/ds2438.o
 HDRS		= 	src/digitemp.h src/device_name.h
@@ -69,6 +72,8 @@ endif
 
 ifeq ($(SYSTYPE), Darwin)
   EXTRACFLAGS += -DDARWIN
+  MYSQLFLAGS = -I/usr/local/mysql/include/mysql
+  MYSQLLIBS = -L/usr/local/mysql/lib -lmysqlclient -lm -lz
 endif
 
 ifeq ($(SYSTYPE), AIX)
@@ -80,11 +85,13 @@ endif
 ds2490:  EXTRACFLAGS += -DOWUSB
 ds2490:  LIBS   += -lusb
 
+LIBS += $(MYSQLLIBS)
+EXTRACFLAGS += $(MYSQLFLAGS)
 
 help:
 	@echo "  SYSTYPE = $(SYSTYPE)"
-	@echo "  CFLAGS = $(CFLAGS)"
-	@echo "  LIBS   = $(LIBS)"
+	@echo "  CFLAGS = $(CFLAGS) $(MYSQLFLAGS)"
+	@echo "  LIBS   = $(LIBS) $(MYSQLLIBS)"
 	@echo ""
 	@echo "Pick one of the following targets:"
 	@echo -e "\tmake ds9097\t- Build version for DS9097 (passive)"
@@ -127,7 +134,7 @@ sign:
 tag:
 		git tag -s -u 0x3085CEE24BECD24B -m "Tag as v$(VERSION)" v$(VERSION)
 
-# Install digitemp into /usr/local/bin
+# Install digitemp into /usr/bin
 install:	digitemp
 		install -b -o root -g bin digitemp /usr/bin
 

@@ -121,7 +121,7 @@ int	read_time,				/* Pause during read	   */
 //MySQL DBCOLUMN config file delimeter
 char ckdelim[] = ",";
 //For column keywords from MySQL config file
-char *columnKeywords[6];
+char *columnKeywords[7];
 
 struct _coupler *coupler_top = NULL;		/* Linked list of couplers */
 
@@ -550,10 +550,10 @@ int log_string( char *line )
 int log_temp( int sensor, float temp_c, unsigned char *sn, MYSQL *conn )
 {
   char	temp[1024],
-  	time_format[160],
-	dtf[160],
-	tempd[1024];
-  time_t	mytime;
+        time_format[160],
+        dtf[160],
+        tempd[1024];
+        time_t mytime;
 
   mytime = time(NULL);
   if( mytime )
@@ -562,74 +562,77 @@ int log_temp( int sensor, float temp_c, unsigned char *sn, MYSQL *conn )
     /* MySQL code has now been implemented on digitemp 3.5       */
     /* MySQL code can now handle custom table format             */
     if(log_type == 6) {
-       char query[2048], snt[1024];
- 
-       sprintf(snt, "%02X%02X%02X%02X%02X%02X%02X%02X",
-               sn[0],sn[1],sn[2],sn[3],sn[4],sn[5],sn[6],sn[7]);
-       strcpy(dtf, "%Y-%m-%d %H:%M:%S");
-       strftime( tempd, 1024, dtf, localtime( &mytime ) );
+      char query[2048], snt[1024];
 
-       /* build the mysql SQL query */
-       if(strlen(dbcolumns) == 0) {
-	 if(strlen(dbtable) == 0)
-	   sprintf(query, "INSERT INTO temps VALUES('%d','%f','%f','%s','%s')",
-		 sensor, temp_c, c2f(temp_c), snt, tempd);
-	 else 
-	   sprintf(query, "INSERT INTO %s VALUES('%d','%f','%f','%s','%s')",
-		 dbtable, sensor, temp_c, c2f(temp_c), snt, tempd);
-       }
-       else {
-	 char *token, *cp;
-	 char tstr[1024];
+      sprintf(snt, "%02X%02X%02X%02X%02X%02X%02X%02X",
+              sn[0],sn[1],sn[2],sn[3],sn[4],sn[5],sn[6],sn[7]);
+      strcpy(dtf, "%Y-%m-%d %H:%M:%S");
+      strftime( tempd, 1024, dtf, localtime( &mytime ) );
 
-	 cp = strdup(dbcolumns);
-	 token = strtok(cp, ckdelim);
-	 sprintf(query, "INSERT INTO %s VALUES(", dbtable);
-	 int wc = 0;
-	 while(token != NULL) {
-	   if(wc > 0)
-	     strcat(query, ",");
+      /* build the mysql SQL query */
+      if(strlen(dbcolumns) == 0) {
+        if(strlen(dbtable) == 0)
+          sprintf(query, "INSERT INTO temps VALUES('%d','%f','%f','%s','%s')",
+                  sensor, temp_c, c2f(temp_c), snt, tempd);
+        else
+          sprintf(query, "INSERT INTO %s VALUES('%d','%f','%f','%s','%s')",
+                  dbtable, sensor, temp_c, c2f(temp_c), snt, tempd);
+      }
+      else {
+        char *token, *cp;
+        char tstr[1024];
 
-	   if(!strcmp(token,"BLANK"))
-	     sprintf(tstr, "''");
-	   else if(!strcmp(token,"TEMPC"))
-	     sprintf(tstr, "'%f'", temp_c);
-	   else if(!strcmp(token,"TEMPF"))
-	     sprintf(tstr, "'%f'", c2f(temp_c));
-	   else if(!strcmp(token,"SERIAL"))
-	     sprintf(tstr, "'%s'", snt);
-	   else if(!strcmp(token,"TIMESTAMP"))
-	     sprintf(tstr, "'%s'", tempd);
-	   else if(!strcmp(token,"SENSOR"))
-	     sprintf(tstr, "'%d'", sensor);
-	   else 
-	     sprintf(tstr, "'BAD TOKEN'");
+        cp = strdup(dbcolumns);
+        token = strtok(cp, ckdelim);
+        sprintf(query, "INSERT INTO %s VALUES(", dbtable);
+        int wc = 0;
+        while(token != NULL) {
+          if(wc > 0)
+            strcat(query, ",");
 
-	     strcat(query, tstr);
-	   token = strtok(NULL, ckdelim);
-	   wc++;
-	 }
-	 strcat(query, ")");
-       }
+          if(!strcmp(token,"BLANK"))
+            sprintf(tstr, "''");
+          else if(!strcmp(token,"HUMI"))
+            sprintf(tstr, "NULL");
+          else if(!strcmp(token,"TEMPC"))
+            sprintf(tstr, "'%f'", temp_c);
+          else if(!strcmp(token,"TEMPF"))
+            sprintf(tstr, "'%f'", c2f(temp_c));
+          else if(!strcmp(token,"SERIAL"))
+            sprintf(tstr, "'%s'", snt);
+          else if(!strcmp(token,"TIMESTAMP"))
+            sprintf(tstr, "'%s'", tempd);
+          else if(!strcmp(token,"SENSOR"))
+            sprintf(tstr, "'%d'", sensor);
+          else
+            sprintf(tstr, "'BAD TOKEN'");
 
-       //printf("query string: '%s'\n", query);
+          strcat(query, tstr);
+          token = strtok(NULL, ckdelim);
+          wc++;
+        }
+        strcat(query, ")");
+        free(cp);
+      }
 
-       /* execute it */
-       if(mysql_query (conn, query) != 0) {
-         printf("Error!! MySQL INSERT failed!\n");
-       }
-       else {
-         return 0;
-       }
+      //printf("query string: '%s'\n", query);
+
+      /* execute it */
+      if(mysql_query (conn, query) != 0) {
+        printf("Error!! MySQL INSERT failed!\n");
+      }
+      else {
+        return 0;
+      }
     }
     else {
-       /* Build the time format string from log_format */
-       build_tf( time_format, temp_format, sensor, temp_c, -1, sn );
+      /* Build the time format string from log_format */
+      build_tf( time_format, temp_format, sensor, temp_c, -1, sn );
 
-       /* Handle the time format tokens */
-       strftime( temp, 1024, time_format, localtime( &mytime ) );
+      /* Handle the time format tokens */
+      strftime( temp, 1024, time_format, localtime( &mytime ) );
 
-       strcat( temp, "\n" );
+      strcat( temp, "\n" );
     }
   } else {
     sprintf( temp, "Time Error\n" );
@@ -678,11 +681,16 @@ int log_counter( int sensor, int page, unsigned long counter, unsigned char *sn 
 
    Used with temperatures
    ----------------------------------------------------------------------- */
-int log_humidity( int sensor, double temp_c, int humidity, unsigned char *sn )
+int log_humidity( int sensor, double temp_c, int humidity, unsigned char *sn, MYSQL *conn  )
 {
   char	temp[1024],
   	time_format[160];
   time_t	mytime;
+  char query[2048], snt[1024];
+  char dtf[160];
+  char *token, *cp;
+  char tstr[1024];
+  char tempd[1024];
 
 
   mytime = time(NULL);
@@ -700,6 +708,66 @@ int log_humidity( int sensor, double temp_c, int humidity, unsigned char *sn )
       case 3:
       case 5:     sprintf( temp, "\t%3.2f", c2f(temp_c) );
                   break;
+
+        /* MySQL mods by Nick, more info at http://illx.org/digitemp */
+        /* MySQL code has now been implemented on digitemp 3.5       */
+        /* MySQL code can now handle custom table format             */
+      case 6:
+        sprintf(snt, "%02X%02X%02X%02X%02X%02X%02X%02X",
+                sn[0],sn[1],sn[2],sn[3],sn[4],sn[5],sn[6],sn[7]);
+        strcpy(dtf, "%Y-%m-%d %H:%M:%S");
+        strftime( tempd, 1024, dtf, localtime( &mytime ) );
+
+        /* build the mysql SQL query */
+        if(strlen(dbcolumns) == 0) {
+          if(strlen(dbtable) == 0)
+            sprintf(query, "INSERT INTO temps VALUES('%d','%f','%f','%s','%s')",
+                    sensor, temp_c, c2f(temp_c), snt, tempd);
+          else
+            sprintf(query, "INSERT INTO %s VALUES('%d','%f','%f','%s','%s')",
+                    dbtable, sensor, temp_c, c2f(temp_c), snt, tempd);
+        }
+        else {
+
+          cp = strdup(dbcolumns);
+          token = strtok(cp, ckdelim);
+          sprintf(query, "INSERT INTO %s VALUES(", dbtable);
+          int wc = 0;
+          while(token != NULL) {
+            if(wc > 0)
+              strcat(query, ",");
+
+            if(!strcmp(token,"BLANK"))
+              sprintf(tstr, "''");
+            else if(!strcmp(token,"TEMPC"))
+              sprintf(tstr, "'%f'", temp_c);
+            else if(!strcmp(token,"TEMPF"))
+              sprintf(tstr, "'%f'", c2f(temp_c));
+            else if(!strcmp(token,"HUMI"))
+              sprintf(tstr, "'%d'", humidity);
+            else if(!strcmp(token,"SERIAL"))
+              sprintf(tstr, "'%s'", snt);
+            else if(!strcmp(token,"TIMESTAMP"))
+              sprintf(tstr, "'%s'", tempd);
+            else if(!strcmp(token,"SENSOR"))
+              sprintf(tstr, "'%d'", sensor);
+            else
+              sprintf(tstr, "'BAD TOKEN'");
+
+            strcat(query, tstr);
+            token = strtok(NULL, ckdelim);
+            wc++;
+          }
+          strcat(query, ")");
+          free(cp);
+        }
+        //printf("query string: '%s'\n", query);
+
+        /* execute it */
+        if(mysql_query (conn, query) != 0) {
+          sprintf(temp, "Error!! MySQL INSERT failed!\n");
+        }
+        break;
 
       default:
                   /* Build the time format string from log_format */
@@ -793,6 +861,23 @@ void show_scratchpad( unsigned char *scratchpad, int sensor_family )
       log_string( temp );
       break;
       
+    case OWSLAVE_FAMILY:
+      sprintf( temp, "  Hum. MSB     : 0x%02X\n", scratchpad[1] );
+      log_string( temp );
+      sprintf( temp, "  Hum. LSB     : 0x%02X\n", scratchpad[2] );
+      log_string( temp );
+      sprintf( temp, "  Hum. CRC     : 0x%02X\n", scratchpad[3] );
+      log_string( temp );
+      sprintf( temp, "  Temp. MSB    : 0x%02X\n", scratchpad[4] );
+      log_string( temp );
+      sprintf( temp, "  Temp. LSB    : 0x%02X\n", scratchpad[5] );
+      log_string( temp );
+      sprintf( temp, "  Temp. CRC    : 0x%02X\n", scratchpad[6] );
+      log_string( temp );
+      sprintf( temp, "  SHT type     : 0x%02X\n", scratchpad[7] );
+      log_string( temp );
+      break;
+
     case DS2422_FAMILY:
     case DS2423_FAMILY:
     
@@ -806,7 +891,189 @@ void show_scratchpad( unsigned char *scratchpad, int sensor_family )
   }
 }
 
+/* -----------------------------------------------------------------------
+ Read the temperature and humidity from owslave
 
+ Hum MSB      = scratchpad[1]
+ Hum LSB      = scratchpad[2]
+ Hum CRC      = scratchpad[3]
+ Temp MSB     = scratchpad[4]
+ Temp LSB     = scratchpad[5]
+ Temp CRC     = scratchpad[6]
+ SHT type     = scratchpad[7]
+
+ ----------------------------------------------------------------------- */
+int read_owslave( int sensor, MYSQL *conn )
+{
+  char    temp[1024];            /* For output string                    */
+  unsigned char lastcrc8,
+                scratchpad[30],  /* Scratchpad block from the sensor     */
+                TempSN[8];
+  int     j,
+          try;                   /* Number of tries at reading device    */
+  float   temp_c;                /* Calculated temperature in Centigrade */
+
+  const float C1 = -2.0468;
+  const float C2 = +0.0367;
+  const float C3 = -0.0000015955;
+  const float T1 = +0.01;
+  const float T2 = +0.00008;
+  float rh_lin;
+  float rh_true;
+  float rh, t;
+  unsigned tcrc, hcrc;
+  unsigned char sensor_type;
+
+  for( try = 0; try < MAX_READ_TRIES; try++ )
+  {
+    if( owAccess(0) )
+    {
+      /* Convert humidity and temperature */
+      if( !owWriteBytePower( 0, 0x44 ) )
+      {
+        return FALSE;
+      }
+
+      /* Sleep for conversion second */
+      msDelay( read_time );
+
+      /* Turn off the strong pullup */
+      owLevel( 0, MODE_NORMAL );
+
+      /* Now read the scratchpad from the device */
+      if( owAccess(0) )
+      {
+        /* Build a block for the Scratchpad read */
+        scratchpad[0] = 0xBE;
+        for( j = 1; j < 8; j++ )
+          scratchpad[j] = 0xFF;
+
+        /* Send the block */
+        if( owBlock( 0, FALSE, scratchpad, 8 ) )
+        {
+          /* Calculate the CRC 8 checksum on the received data */
+          lastcrc8 = 0x00;
+          sensor_type = scratchpad[7];
+          if( sensor_type == 2 ){
+            // sht2x - i2c
+            hcrc = crc8_add( 0x0, scratchpad[1] );
+            hcrc = crc8_add( hcrc, scratchpad[2] );
+            tcrc = crc8_add( 0x0, scratchpad[4] );
+            tcrc = crc8_add( tcrc, scratchpad[5] );
+          } else {
+            //sht1x sht7x
+            hcrc = crc8_add( 0x0, 0x05 );
+            hcrc = crc8_add( hcrc, scratchpad[1] );
+            hcrc = crc8_add( hcrc, scratchpad[2] );
+            hcrc = rev8bits( hcrc );
+            tcrc = crc8_add( 0x0, 0x03 );
+            tcrc = crc8_add( tcrc, scratchpad[4] );
+            tcrc = crc8_add( tcrc, scratchpad[5] );
+            tcrc = rev8bits( tcrc );
+          }
+          if( hcrc != scratchpad[3] )
+          {
+            lastcrc8 += 0x01;
+            fprintf( stderr, "HUMI CRC Failed. CRC is 0x%02X instead of 0x%02X\n", scratchpad[3], hcrc );
+          }
+          if( tcrc != scratchpad[6] )
+          {
+            lastcrc8 += 0x01;
+            fprintf( stderr, "TEMP CRC Failed. CRC is 0x%02X instead of 0x%02X\n", scratchpad[6], tcrc );
+          }
+          /* If the CRC8 is valid then calculate the temperature */
+          if( lastcrc8 == 0x00 )
+          {
+            scratchpad[2] = scratchpad[2] & ~0x3;
+            scratchpad[5] = scratchpad[5] & ~0x3;
+            rh = (float)( ( scratchpad[1] << 8 ) | scratchpad[2] );
+            t = (float)( ( scratchpad[4] << 8 ) | scratchpad[5] );
+
+            if( sensor_type == 2 )
+            {
+              // sht2x i2c
+              rh_true = 125 * rh / 65536 - 6;
+              temp_c = 175.72 * t / 65536 - 46.85;
+            } else {
+              // sht1x sht7x
+              temp_c = t * 0.01 - 40.1;
+              rh_lin = C3 * rh * rh + C2 * rh + C1;
+              rh_true = ( temp_c - 25 ) * (T1 + T2 * rh ) + rh_lin;
+              if ( rh_true > 100 )
+                rh_true = 100;
+              if ( rh_true < 0.1 )
+                rh_true = 0.1;
+            }
+            /* Log the temperature */
+            switch( log_type )
+            {
+              /* Multiple Centigrade temps per line */
+              case 2:
+              case 4:     sprintf( temp, "\t%3.2f", temp_c );
+                log_string( temp );
+                break;
+
+              /* Multiple Fahrenheit temps per line */
+              case 3:
+              case 5:     sprintf( temp, "\t%3.2f", c2f(temp_c) );
+                log_string( temp );
+                break;
+
+              /* MySQL log_type */
+              case 6:     owSerialNum( 0, &TempSN[0], TRUE );
+                log_humidity( sensor, temp_c, rh_true, TempSN, conn );
+                break;
+
+              default:    owSerialNum( 0, &TempSN[0], TRUE );
+                log_humidity( sensor, temp_c, rh_true, TempSN, 0 );
+                break;
+            } /* switch( log_type ) */
+
+            /* Show the scratchpad if verbose is seelcted */
+            if( opts & OPT_VERBOSE )
+            {
+              show_scratchpad( scratchpad, OWSLAVE_FAMILY );
+            } /* if OPT_VERBOSE */
+
+            /* Good conversion finished */
+            return TRUE;
+          } else {
+            if ( try == MAX_READ_TRIES - 1 )
+            {
+              /* need to output something (0,-,NaN?) to keep columns consistent */
+              switch( log_type )
+              {
+                 /* Multiple Centigrade temps per line */
+                 case 2:
+                 case 4:
+                 /* Multiple Fahrenheit temps per line */
+                 case 3:
+                 case 5:     sprintf( temp, "\t%3.2f", (double) 0 );
+                             log_string( temp );
+                             break;
+
+                 default:
+                             break;
+              } /* switch( log_type ) */
+            } /* if tries == max_read_tries */
+
+            if( opts & OPT_VERBOSE )
+            {
+              show_scratchpad( scratchpad, OWSLAVE_FAMILY );
+            } /* if OPT_VERBOSE */
+          } /* CRC 8 is OK */
+        } /* Scratchpad Read */
+      } /* owAccess failed */
+    } /* owAccess failed */
+
+    /* Failed to read, rest the network, delay and try again */
+    owTouchReset(0);
+    msDelay( read_time );
+  } /* for try < 3 */
+
+  /* Failed, no good reads after MAX_READ_TRIES */
+  return FALSE;
+}
 
 /* -----------------------------------------------------------------------
    Read the temperature from one sensor
@@ -833,7 +1100,7 @@ void show_scratchpad( unsigned char *scratchpad, int sensor_family )
 int read_temperature( int sensor_family, int sensor, MYSQL *conn )
 {
   char    temp[1024];              /* For output string                    */
-  unsigned char lastcrc8,
+  unsigned char lastcrc8 = 0,
                 scratchpad[30],    /* Scratchpad block from the sensor     */
                 TempSN[8];
   int     j,
@@ -953,10 +1220,11 @@ int read_temperature( int sensor_family, int sensor, MYSQL *conn )
               case 5:     sprintf( temp, "\t%3.2f", c2f(temp_c) );
                           log_string( temp );
                           break;
+                
               /* MySQL log_type */
-              case 6:    owSerialNum( 0, &TempSN[0], TRUE );
-                         log_temp( sensor, temp_c, TempSN, conn );
-                         break;
+              case 6:     owSerialNum( 0, &TempSN[0], TRUE );
+                          log_temp( sensor, temp_c, TempSN, conn );
+                          break;
 
               default:    owSerialNum( 0, &TempSN[0], TRUE );
                           log_temp( sensor, temp_c, TempSN, 0 );
@@ -1160,9 +1428,9 @@ int read_ds2406( int sensor_family, int sensor )
    ----------------------------------------------------------------------- */
 int read_ds2438( int sensor_family, int sensor )
 {
-  double	temp_c;
-  float		vdd,
-  		ad;
+  double	temp_c = -999.0;
+  float		vdd = -1.0,
+  		ad = -1.0;
   char		temp[1024],
   		time_format[160];
   time_t	mytime;
@@ -1183,7 +1451,6 @@ int read_ds2438( int sensor_family, int sensor )
       /* Read A/D reading from the humidity sensor */
       if( (ad = Volt_Reading(0, 0, NULL)) != -1.0 )
       {
-        result = TRUE;
         break;
       }
     }
@@ -1266,7 +1533,7 @@ int read_ds2438( int sensor_family, int sensor )
    ----------------------------------------------------------------------- */
 int read_humidity( int sensor_family, int sensor )
 {
-  double	temp_c;			/* Converted temperature in degrees C */
+  double	temp_c = -999.0;	/* Converted temperature in degrees C */
   float		sup_voltage,		/* Supply voltage in volts            */
 		hum_voltage,		/* Humidity sensor voltage in volts   */
 		humidity = 0.0;		/* Calculated humidity in %RH         */
@@ -1306,7 +1573,7 @@ int read_humidity( int sensor_family, int sensor )
 
   /* Log the temperature and humidity */
   owSerialNum( 0, &TempSN[0], TRUE );
-  log_humidity( sensor, temp_c, humidity, TempSN );
+  log_humidity( sensor, temp_c, humidity, TempSN, 0 );
 
   return result;
 }
@@ -1387,7 +1654,7 @@ int read_temperature_DS1923( int sensor_family, int sensor )
  	     a tempsn to pewnie id urzadzenia 1wire
           */
           owSerialNum( 0, &TempSN[0], TRUE );
-          log_humidity( sensor, temp_c, humidity, TempSN );
+          log_humidity( sensor, temp_c, humidity, TempSN, 0 );
 
           /* Good conversion finished */
           return TRUE;
@@ -1506,6 +1773,10 @@ int read_device( struct _roms *sensor_list, int sensor, MYSQL *conn )
       status = read_temperature( sensor_family, sensor, conn ); // also for DS28EA00
       break;
 
+    case OWSLAVE_FAMILY:
+      status = read_owslave( sensor, conn );
+      break;
+
     case DS1923_FAMILY:
       status = read_temperature_DS1923( sensor_family, sensor );
       break;      
@@ -1557,7 +1828,7 @@ int read_all( struct _roms *sensor_list )
 }
 
 /* This routine reads all the sensors and logs to MySQL */
-int read_all_and_dblog( struct _roms *sensor_list, MYSQL *conn  )
+int read_all_and_dblog( struct _roms *sensor_list, MYSQL *conn )
 {
   int x;
  
@@ -1644,7 +1915,7 @@ int read_rcfile( char *fname, struct _roms *sensor_list )
     } else if( strncasecmp( "READ_TIME", ptr, 9 ) == 0 ) {
       ptr = strtok( NULL, " \t\n");
       read_time = atoi( ptr );
-    } else if( strncasecmp( "SENSORS", ptr, 7 ) == 0 ) {
+    } else if( strncasecmp( "SENSORS", ptr, 7 ) == 0 && sensor_list->roms == NULL ) {
       ptr = strtok( NULL, " \t\n" );
       sensors = atoi( ptr );
       
@@ -1659,7 +1930,7 @@ int read_rcfile( char *fname, struct _roms *sensor_list )
         }
         sensor_list->max = sensors; 
       }
-    } else if( strncasecmp( "ROM", ptr, 3 ) == 0 ) {
+    } else if( strncasecmp( "ROM", ptr, 3 ) == 0 && sensor_list->roms != NULL ) {
       /* Main LAN sensors */
       ptr = strtok( NULL, " \t\n" );
       sensors = atoi( ptr );
@@ -1825,6 +2096,7 @@ int read_rcfile( char *fname, struct _roms *sensor_list )
    SENSOR
    TEMPC
    TEMPF
+   HUMI
    SERIAL
    TIMESTAMP
 
@@ -1899,7 +2171,7 @@ int read_rcdbfile( char *fname )
       //printf("dbcolumn token validation '%s'\n", token);
       int bc = 1;
       int i;
-      for(i=0;i<6;i++)
+      for(i=0;i<7;i++)
 	if(!strcmp(columnKeywords[i], token))
 	  bc--;
 
@@ -1909,6 +2181,7 @@ int read_rcdbfile( char *fname )
       }
       token = strtok(NULL, ckdelim);
     }
+    free(cp);
   }
 
   return 0;
@@ -2350,7 +2623,8 @@ int Init1WireLan( struct _roms *sensor_list )
                (TempSN[0] == DS2413_FAMILY) ||
                (TempSN[0] == DS2422_FAMILY) ||
                (TempSN[0] == DS2423_FAMILY) ||
-	       (TempSN[0] == DS2438_FAMILY)
+               (TempSN[0] == OWSLAVE_FAMILY) ||
+               (TempSN[0] == DS2438_FAMILY)
              )
     {
       /* Print the serial number */
@@ -2400,6 +2674,7 @@ int Init1WireLan( struct _roms *sensor_list )
           (TempSN[0] == DS2413_FAMILY) ||
           (TempSN[0] == DS2422_FAMILY) ||
           (TempSN[0] == DS2423_FAMILY) ||
+          (TempSN[0] == OWSLAVE_FAMILY) ||
           (TempSN[0] == DS2438_FAMILY)
 	)
       {
@@ -2545,6 +2820,7 @@ int file_exists (char * fileName)
    return 0;
 }
 
+
 /* ----------------------------------------------------------------------- *
    DigiTemp main routine
    
@@ -2564,9 +2840,10 @@ int main( int argc, char *argv[] )
   struct _roms  sensor_list;            /* Attached Roms                */
 
   /* valid MySQL column keywords */
-  char *ck1 = "SENSOR", *ck2 = "TEMPC", *ck3 = "TEMPF", *ck4 = "SERIAL", *ck5 = "TIMESTAMP", *ck6 = "BLANK";
+  char *ck1 = "SENSOR", *ck2 = "TEMPC", *ck3 = "TEMPF", *ck4 = "SERIAL", *ck5 = "TIMESTAMP", *ck6 = "BLANK", *ck7 = "HUMI";
   columnKeywords[0] = ck1; columnKeywords[1] = ck2; columnKeywords[2] = ck3; 
-  columnKeywords[3] = ck4; columnKeywords[4] = ck5; columnKeywords[5] = ck6;
+  columnKeywords[3] = ck4; columnKeywords[4] = ck5; columnKeywords[5] = ck6; 
+  columnKeywords[6] = ck7;
 
 
   /* Make sure the structure is erased */
@@ -2935,26 +3212,29 @@ int main( int argc, char *argv[] )
     }
 
     /* MySQL database stuff */
-    if( opts & OPT_DBLOG ) {
+    if( opts & OPT_DBLOG )
+    {
       /* open the mysql database */
       MYSQL *conn;
-      conn = mysql_init(NULL);
-      if(conn == NULL) {
-	fprintf(stderr, "mysql_init() failed... probably out of memory\n");
-	exit(1);
+      conn = mysql_init( NULL );
+      if( conn == NULL )
+      {
+        fprintf(stderr, "mysql_init() failed... probably out of memory\n");
+        exit(1);
       }
- 
-      if( mysql_real_connect (conn,dbhost,dbuser,dbpass,
-			      dbname,0,NULL,0) == NULL) {
-	fprintf(stderr, "mysql_real_connect() failed!\nError: (%u) '%s'\n",
-		mysql_errno(conn), mysql_error(conn));
-	mysql_close(conn);
-	exit(1);
+      
+      if( mysql_real_connect( conn,dbhost,dbuser,dbpass,
+                              dbname,0,NULL,0) == NULL )
+      {
+        fprintf( stderr, "mysql_real_connect() failed!\nError: (%u) '%s'\n",
+                mysql_errno( conn ), mysql_error( conn ) );
+        mysql_close(conn);
+        exit(1);
       }
       
       log_type = 6;
       read_all_and_dblog( &sensor_list, conn );
-      mysql_close(conn);
+      mysql_close( conn );
     }
       
     switch( log_type )
@@ -3073,4 +3353,30 @@ int read_pio_ds28ea00( int sensor_family, int sensor )
   }
 
   return FALSE;
+}
+/* sht data crc */
+static unsigned crc8_add( unsigned acc, unsigned byte )
+{
+  int i;
+  acc ^= byte;
+  for( i = 0; i < 8; i++ ) {
+    if( acc & 0x80 ) {
+      acc = ( acc << 1 ) ^ 0x31;
+    } else {
+      acc <<= 1;
+    }
+  }
+  return acc & 0xff;
+}
+static unsigned char rev8bits( unsigned char v )
+{
+  unsigned char r = v;
+  int s = 7;
+  for( v >>= 1; v; v >>= 1 ) {
+    r <<= 1;
+    r |= v & 1;
+    s--;
+  }
+  r <<= s;
+  return r;
 }

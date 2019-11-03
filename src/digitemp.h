@@ -44,6 +44,7 @@
 #define DS2422_FAMILY	0x1C
 #define DS2423_FAMILY	0x1D
 #define DS2438_FAMILY   0x26
+#define OWSLAVE_FAMILY	0xBF
 // and non-supported yet, but coming soon
 #define DS2408_FAMILY	0x29
 #define DS2413_FAMILY	0x3A
@@ -87,8 +88,8 @@ struct _coupler {
 };
 
 /* Prototypes */
-void usage();
-void free_coupler();
+void usage(void);
+void free_coupler( int free_only );
 float c2f( float temp );
 int build_tf( char *time_format, char *format, int sensor, 
               float temp_c, int humidity, unsigned char *sn );
@@ -97,7 +98,7 @@ int build_cf( char *time_format, char *format, int sensor, int page,
 int log_string( char *line );
 int log_temp( int sensor, float temp_c, unsigned char *sn, MYSQL *conn );
 int log_counter( int sensor, int page, unsigned long counter, unsigned char *sn );
-int log_humidity( int sensor, double temp_c, int humidity, unsigned char *sn );
+int log_humidity( int sensor, double temp_c, int humidity, unsigned char *sn, MYSQL *conn  );
 int cmpSN( unsigned char *sn1, unsigned char *sn2, int branch );
 void show_scratchpad( unsigned char *scratchpad, int sensor_family );
 int read_temperature( int sensor_family, int sensor, MYSQL *conn );
@@ -109,10 +110,14 @@ int read_all( struct _roms *sensor_list );
 int read_rcfile( char *fname, struct _roms *sensor_list );
 int write_rcfile( char *fname, struct _roms *sensor_list );
 void printSN( unsigned char *TempSN, int crlf );
-int Walk1Wire();
+int Walk1Wire(void);
 int sercmp( unsigned char *sn1, unsigned char *sn2 );
 int Init1WireLan( struct _roms *sensor_list );
 int read_pio_ds28ea00( int sensor_family, int sensor );
+
+/* owslave */
+static unsigned crc8_add(unsigned acc, unsigned byte);
+static unsigned char rev8bits(unsigned char v);
 
 /* From ds2438.c */
 int get_ibl_type(int portnum, unsigned char page, int offset);
