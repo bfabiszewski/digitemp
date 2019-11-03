@@ -211,7 +211,7 @@ void owTouchBlock( int portnum, int timeout, int nbits, uchar *transfer_buf)
    unsigned int i;
    unsigned int bit_counter = 0;
    unsigned int nretrieved_bits;
-   unsigned int nread_bits;
+   ssize_t nread_bits;
    
    int nbits2;
 

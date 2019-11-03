@@ -1867,10 +1867,8 @@ int read_rcfile( char *fname, struct _roms *sensor_list )
   char	*ptr;
   int	sensors, x;
   struct _coupler *c_ptr, *coupler_end;
-  
-  sensors = 0;
+
   num_cs = 0;
-  c_ptr = coupler_top;
   coupler_end = coupler_top;
     
   if( ( fp = fopen( fname, "r" ) ) == NULL )
@@ -1984,7 +1982,7 @@ int read_rcfile( char *fname, struct _roms *sensor_list )
       }
 
       /* Ignore the coupler # */
-      ptr = strtok( NULL, " \t\n" );
+      strtok( NULL, " \t\n" );
       
       /* Read the 8 byte ROM address */
       for( x = 0; x < 8; x++ )
@@ -1998,7 +1996,7 @@ int read_rcfile( char *fname, struct _roms *sensor_list )
 
       /* DS2409 Coupler sensors */    
       /* Ignore sensor #, they are all created in order */
-      ptr = strtok( NULL, " \t\n" );
+      strtok( NULL, " \t\n" );
 
       /* Get the coupler number, and set the pointer to the right
          coupler
@@ -2108,13 +2106,8 @@ int read_rcdbfile( char *fname )
   FILE  *fp;
   char  temp[80];
   char  *ptr;
-  int   sensors;
-  struct _coupler *c_ptr, *coupler_end;
 
-  sensors = 0;
   num_cs = 0;
-  c_ptr = coupler_top;
-  coupler_end = coupler_top;
  
   if( ( fp = fopen( fname, "r" ) ) == NULL ) {
     /* No rcfile to read, could be part of an -i so don't die */
@@ -3268,7 +3261,7 @@ int main( int argc, char *argv[] )
     {
       /* Sleep for the remaining time, if there is any */
       if( (time(NULL) - last_time) < sample_delay )
-        sleep( sample_delay - (time(NULL) - last_time) );
+        sleep( sample_delay - (unsigned int) (time(NULL) - last_time) );
     }
   }
 

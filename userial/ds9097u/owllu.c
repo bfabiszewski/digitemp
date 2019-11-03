@@ -356,7 +356,6 @@ SMALLINT owSpeed(int portnum, SMALLINT new_speed)
          if (!WriteCOM(portnum,sendlen,sendpacket))
          {
             OWERROR(OWERROR_WRITECOM_FAILED);
-            rt = FALSE;
             // lost communication with DS2480 then reset
             DS2480Detect(portnum);
          }
