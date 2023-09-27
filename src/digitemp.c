@@ -127,7 +127,7 @@ int	read_time,				/* Pause during read	   */
 //MySQL DBCOLUMN config file delimeter
 char ckdelim[] = ",";
 //For column keywords from MySQL config file
-char *columnKeywords[7];
+char *columnKeywords[8];
 
 struct _coupler *coupler_top = NULL;		/* Linked list of couplers */
 
@@ -952,6 +952,8 @@ int log_temp( int sensor, float temp_c, unsigned char *sn, MYSQL *conn )
 
           if(!strcmp(token,"BLANK"))
             sprintf(tstr, "''");
+          else if(!strcmp(token,"NULL"))
+            sprintf(tstr, "NULL");
           else if(!strcmp(token,"HUMI"))
             sprintf(tstr, "NULL");
           else if(!strcmp(token,"TEMPC"))
@@ -1099,6 +1101,8 @@ int log_humidity( int sensor, double temp_c, int humidity, unsigned char *sn, MY
 
             if(!strcmp(token,"BLANK"))
               sprintf(tstr, "''");
+            else if(!strcmp(token,"NULL"))
+              sprintf(tstr, "NULL");
             else if(!strcmp(token,"TEMPC"))
               sprintf(tstr, "'%f'", temp_c);
             else if(!strcmp(token,"TEMPF"))
@@ -2500,8 +2504,8 @@ int read_rcfile( char *fname, struct _roms *sensor_list )
    SERIAL
    TIMESTAMP
 
-   Also, DBCOLUMNS may have an optional BLANK which would serve as a blank coulmn INSERT, an example could be:
-   SENSOR,BLANK,TEMPC,TIMESTAMP,BLANK,SERIAL
+   Also, DBCOLUMNS may have an optional BLANK or NULL which would serve as a blank or null column INSERT, an example could be:
+   SENSOR,BLANK,TEMPC,TIMESTAMP,NULL,SERIAL
 */
 int read_rcdbfile( char *fname )
 {
@@ -2566,7 +2570,7 @@ int read_rcdbfile( char *fname )
       //printf("dbcolumn token validation '%s'\n", token);
       int bc = 1;
       int i;
-      for(i=0;i<7;i++)
+      for(i=0;i<8;i++)
 	if(!strcmp(columnKeywords[i], token))
 	  bc--;
 
@@ -3237,11 +3241,10 @@ int main( int argc, char *argv[] )
   struct _roms  sensor_list;            /* Attached Roms                */
 
   /* valid MySQL column keywords */
-  char *ck1 = "SENSOR", *ck2 = "TEMPC", *ck3 = "TEMPF", *ck4 = "SERIAL", *ck5 = "TIMESTAMP", *ck6 = "BLANK", *ck7 = "HUMI";
+  char *ck1 = "SENSOR", *ck2 = "TEMPC", *ck3 = "TEMPF", *ck4 = "SERIAL", *ck5 = "TIMESTAMP", *ck6 = "BLANK", *ck7 = "HUMI", *ck8 = "NULL";
   columnKeywords[0] = ck1; columnKeywords[1] = ck2; columnKeywords[2] = ck3; 
-  columnKeywords[3] = ck4; columnKeywords[4] = ck5; columnKeywords[5] = ck6; 
-  columnKeywords[6] = ck7;
-
+  columnKeywords[3] = ck4; columnKeywords[4] = ck5; columnKeywords[5] = ck6;
+  columnKeywords[6] = ck7; columnKeywords[7] = ck8;
 
   /* Make sure the structure is erased */
   bzero( &sensor_list, sizeof( struct _roms ) );
